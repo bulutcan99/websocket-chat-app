@@ -22,7 +22,7 @@ func InitLogger() *zap.Logger {
 
 func Init() {
 	Logger = InitLogger()
-	Env := env.ParseEnv()
+	_ = env.ParseEnv()
 }
 
 func Start() {
@@ -39,10 +39,9 @@ func Start() {
 
 	cfg := config.FiberConfig()
 	app := fiber.New(cfg)
-	app.Group("/MSN")
 	middleware.MiddlewareFiber(app)
 	app.Static("/static", "./static")
-	route.IndexRoutes("/", app)
+	route.Index("/", app)
 
 	if *STAGE_STATUS == "development" {
 		config.StartServer(app)

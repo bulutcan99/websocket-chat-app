@@ -6,9 +6,15 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/logger"
 )
 
+func getCorsConfig() *cors.Config {
+	return &cors.Config{
+		AllowCredentials: true,
+	}
+}
+
 func MiddlewareFiber(m *fiber.App) {
 	m.Use(
-		cors.New(),
+		cors.New(*getCorsConfig()),
 		logger.New(),
 	)
 }
