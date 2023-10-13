@@ -7,11 +7,10 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func FiberConfig() fiber.Config {
-	Env := env.ParseEnv()
-	readTimeoutSecondsCount := Env.ServerReadTimeout
+var READ_TIMEOUT_SECONDS_COUNT = &env.Env.ServerReadTimeout
 
+func FiberConfig() fiber.Config {
 	return fiber.Config{
-		ReadTimeout: time.Second * time.Duration(readTimeoutSecondsCount),
+		ReadTimeout: time.Second * time.Duration(*READ_TIMEOUT_SECONDS_COUNT),
 	}
 }

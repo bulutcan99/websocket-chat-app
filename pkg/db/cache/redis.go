@@ -6,18 +6,18 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+var REDIS_DB_NUMBER = &env.Env.RedisDBNumber
+var REDIS_PASSWORD = &env.Env.RedisPassword
+
 func RedisConn() (*redis.Client, error) {
-	Env := env.ParseEnv()
-	redisDbNumber := Env.RedisDBNumber
 	redisCon, err := config.ConnectionURLBuilder("redis")
 	if err != nil {
 		return nil, err
 	}
-	redisPass := Env.RedisPassword
 	options := &redis.Options{
 		Addr:     redisCon,
-		Password: redisPass,
-		DB:       redisDbNumber,
+		Password: *REDIS_PASSWORD,
+		DB:       *REDIS_DB_NUMBER,
 	}
 
 	return redis.NewClient(options), nil

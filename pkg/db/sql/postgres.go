@@ -7,14 +7,19 @@ import (
 	"github.com/jmoiron/sqlx"
 	"time"
 
-	_ "github.com/jackc/pgx/v4/stdlib" // load pgx driver for PostgreSQL
+	_ "github.com/jackc/pgx/v4/stdlib"
+)
+
+var (
+	DB_MAX_CON           = &env.Env.DbMaxConnections
+	DB_MAX_IDLE_CON      = &env.Env.DbMaxIdleConnections
+	DB_MAX_LIFE_TIME_CON = &env.Env.DbMaxLifetimeConnections
 )
 
 func PostgreSQLConnection() (*sqlx.DB, error) {
-	Env := env.ParseEnv()
-	maxConn := Env.DbMaxConnections
-	maxIdleConn := Env.DbMaxIdleConnections
-	maxLifeTimeConn := Env.DbMaxLifetimeConnections
+	maxConn := *DB_MAX_CON
+	maxIdleConn := *DB_MAX_IDLE_CON
+	maxLifeTimeConn := *DB_MAX_LIFE_TIME_CON
 	postgresConnURL, err := config.ConnectionURLBuilder("postgres")
 	if err != nil {
 		return nil, err

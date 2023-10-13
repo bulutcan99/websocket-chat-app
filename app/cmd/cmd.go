@@ -10,9 +10,9 @@ import (
 	"time"
 )
 
-var Env *env.ENV
 var Logger *zap.Logger
 var SchedulerTime time.Duration
+var STAGE_STATUS = &env.Env.StageStatus
 
 func InitLogger() *zap.Logger {
 	logger, _ := zap.NewDevelopment()
@@ -22,6 +22,7 @@ func InitLogger() *zap.Logger {
 
 func Init() {
 	Logger = InitLogger()
+	Env := env.ParseEnv()
 }
 
 func Start() {
@@ -43,7 +44,7 @@ func Start() {
 	app.Static("/static", "./static")
 	route.IndexRoutes("/", app)
 
-	if Env.StageStatus == "development" {
+	if *STAGE_STATUS == "development" {
 		config.StartServer(app)
 	} else {
 		config.StartServerWithGracefulShutdown(app)
