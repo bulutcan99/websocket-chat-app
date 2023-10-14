@@ -1,18 +1,21 @@
 package cmd
 
 import (
-	"github.com/bulutcan99/go-websocket/app/api/middleware"
 	"github.com/bulutcan99/go-websocket/app/api/route"
 	"github.com/bulutcan99/go-websocket/pkg/config"
 	"github.com/bulutcan99/go-websocket/pkg/env"
+	"github.com/bulutcan99/go-websocket/pkg/middleware"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/zap"
 	"time"
 )
 
-var Logger *zap.Logger
-var SchedulerTime time.Duration
-var STAGE_STATUS = &env.Env.StageStatus
+var (
+	Logger        *zap.Logger
+	SchedulerTime time.Duration
+	STAGE_STATUS  = &env.Env.StageStatus
+	stageStatus   = "development"
+)
 
 func InitLogger() *zap.Logger {
 	logger, _ := zap.NewDevelopment()
@@ -43,7 +46,7 @@ func Start() {
 	app.Static("/static", "./static")
 	route.Index("/", app)
 
-	if *STAGE_STATUS == "development" {
+	if *STAGE_STATUS == stageStatus {
 		config.StartServer(app)
 	} else {
 		config.StartServerWithGracefulShutdown(app)
