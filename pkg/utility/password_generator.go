@@ -1,19 +1,46 @@
 package utility
 
-import "golang.org/x/crypto/bcrypt"
+import (
+	custom_error "github.com/bulutcan99/go-websocket/pkg/error"
+	"golang.org/x/crypto/bcrypt"
+	"regexp"
+)
 
 func NormalizePassword(pass string) []byte {
 	return []byte(pass)
 }
 
-func GeneratePassword(pass string) string {
-	bytePwd := NormalizePassword(pass)
-	hash, err := bcrypt.GenerateFromPassword(bytePwd, bcrypt.MinCost)
-	if err != nil {
-		return err.Error()
+func isStrongPassword(password string) bool {
+	if len(password) < 8 {
+		return false
 	}
 
-	return string(hash)
+	if ok, _ := regexp.MatchString(`[A-Z]`, password); !ok {
+		return false
+	}
+	if ok, _ := regexp.MatchString(`[a-z]`, password); !ok {
+		return false
+	}
+	if ok, _ := regexp.MatchString(`[0-9]`, password); !ok {
+		return false
+	}
+
+	return true
+}
+
+func GeneratePassword(pass string) (string, error) {
+	err := isStrongPassword(pass)
+	if err == false {
+		return "", custom_error.PassError()
+	}
+
+	bytePwd := NormalizePassword(pass)
+	hash, errCrypt := bcrypt.GenerateFromPassword(bytePwd, bcrypt.MinCost)
+	if errCrypt != nil {
+		return "", custom_error.ParseError()
+	}
+
+	return string(hash), nil
 }
 
 func ComparePasswords(hashedPwd, inputPwd string) bool {
