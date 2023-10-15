@@ -1,12 +1,13 @@
 package model
 
 type Register struct {
-	Email    string `json:"email" validate:"required,email,lte=50"`
-	Password string `json:"password" validate:"required,lte=30"`
-	UserRole string `json:"user_role" validate:"required,lte=25"`
+	NameSurname string `db:"name_surname" json:"name_surname" validate:"required,lte=100"`
+	Email       string `json:"email" validate:"required,nonzero,emailvalidator"`
+	Password    string `json:"password" validate:"required,passvalidator,lte=30"`
+	UserRole    string `json:"user_role" validate:"required,rolevalidator,lte=10"`
 }
 
 type SignIn struct {
-	Email    string `json:"email" validate:"required,email,lte=50"`
-	Password string `json:"password" validate:"required,lte=30"`
+	Email    string `json:"email" validate:"required,nonzero,emailvalidator"`
+	Password string `json:"password" validate:"required,passvalidator,lte=30"`
 }

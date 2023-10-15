@@ -1,8 +1,7 @@
 package config
 
 import (
-	"github.com/bulutcan99/go-websocket/pkg/db/cache"
-	db "github.com/bulutcan99/go-websocket/pkg/db/sql"
+	"fmt"
 	custom_error "github.com/bulutcan99/go-websocket/pkg/error"
 	"log"
 	"os"
@@ -34,22 +33,24 @@ func StartServerWithGracefulShutdown(a *fiber.App) {
 }
 
 func StartServer(a *fiber.App) {
-	redisClient, err := cache.RedisConn()
+	redisClient, err := RedisConn()
 	if err != nil {
 		custom_error.ConnectionError()
 		return
 	}
 
+	fmt.Println("Redis connected")
 	defer redisClient.Close()
-	postgresDB, err := db.PostgreSQLConnection()
+	postgresDB, err := PostgreSQLConnection()
 	if err != nil {
 		custom_error.ConnectionError()
 		return
 	}
+
+	fmt.Println("Postgres connected")
 	defer postgresDB.Close()
-
 	fiberConnURL, _ := ConnectionURLBuilder("fiber")
-
+	fmt.Println("Fiber connected")
 	if err := a.Listen(fiberConnURL); err != nil {
 		log.Printf("Oops... Server is not running! Reason: %v", err)
 	}

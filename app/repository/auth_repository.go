@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"fmt"
 	"github.com/bulutcan99/go-websocket/app/model"
 	custom_error "github.com/bulutcan99/go-websocket/pkg/error"
 	"github.com/google/uuid"
@@ -12,17 +13,20 @@ type AuthRepo struct {
 }
 
 type AuthInterface interface {
-	CreateUser(u *model.User) error
+	CreateUser(u model.User) error
 	GetUserById(id uuid.UUID) (model.User, error)
 	GetUserRoleById(id uuid.UUID) (string, error)
 }
 
-func (r *AuthRepo) CreateUser(u *model.User) error {
-	query := `INSERT INTO users VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
+func (r *AuthRepo) CreateUser(u model.User) error {
+	fmt.Println("Burda")
+	query := `INSERT INTO users VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
+
 	_, err := r.Exec(
 		query,
-		u.ID, u.CreatedAt, u.UpdatedAt, u.Email, u.PasswordHash, u.Status, u.Role, u.NameSurname, u.Status)
+		u.ID, u.CreatedAt, u.UpdatedAt, u.Email, u.PasswordHash, u.Status, u.UserRole, u.NameSurname)
 	if err != nil {
+		fmt.Println("SA")
 		return custom_error.DatabaseError()
 	}
 
@@ -48,5 +52,5 @@ func (r *AuthRepo) GetUserRoleById(id uuid.UUID) (string, error) {
 		return "", custom_error.DatabaseError()
 	}
 
-	return user.Role, nil
+	return user.UserRole, nil
 }

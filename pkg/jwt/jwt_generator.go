@@ -4,15 +4,17 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"github.com/bulutcan99/go-websocket/pkg/env"
 	"github.com/golang-jwt/jwt/v4"
 	"strconv"
 	"strings"
 	"time"
-	"websocket_chat/pkg/env"
 )
 
 var (
-	Env = env.ParseEnv()
+	JWT_SECRET_KEY               = &env.Env.JwtSecretKey
+	JWT_SECRET_KEY_EXPIRE_MINUTE = &env.Env.JwtSecretKeyExpireMinutesCount
+	JWT_SECRET_KEY_EXPIRE_HOUR   = &env.Env.JwtRefreshKeyExpireHoursCount
 )
 
 type Tokens struct {
@@ -40,8 +42,8 @@ func GenerateNewTokens(id string, role string) (*Tokens, error) {
 }
 
 func generateNewAccessToken(id string, role string) (string, error) {
-	secret := Env.JwtSecretKey
-	minutesCount := Env.JwtSecretKeyExpireMinutesCount
+	secret := *JWT_SECRET_KEY
+	minutesCount := *JWT_SECRET_KEY_EXPIRE_MINUTE
 
 	claims := jwt.MapClaims{}
 	claims["id"] = id
@@ -58,14 +60,14 @@ func generateNewAccessToken(id string, role string) (string, error) {
 
 func generateNewRefreshToken() (string, error) {
 	hash := sha256.New()
-	refresh := Env.JwtRefreshKey + time.Now().String()
+	refresh := *JWT_SECRET_KEY + time.Now().String()
 
 	_, err := hash.Write([]byte(refresh))
 	if err != nil {
 		return "", err
 	}
 
-	hoursCount := Env.JwtRefreshKeyExpireHoursCount
+	hoursCount := *JWT_SECRET_KEY_EXPIRE_HOUR
 	expireTime := fmt.Sprint(time.Now().Add(time.Hour * time.Duration(hoursCount)).Unix())
 	t := hex.EncodeToString(hash.Sum(nil)) + "." + expireTime
 	return t, nil

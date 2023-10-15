@@ -2,9 +2,9 @@ package env
 
 import (
 	"fmt"
+	custom_error "github.com/bulutcan99/go-websocket/pkg/error"
 	"github.com/caarlos0/env"
 	"github.com/joho/godotenv"
-	"go.uber.org/zap"
 	"os"
 	"sync"
 )
@@ -40,7 +40,7 @@ func ParseEnv() *ENV {
 	doOnce.Do(func() {
 		e := godotenv.Load()
 		if e != nil {
-			zap.S().Errorf("Error while loading .env file: %s", e)
+			custom_error.ParseError()
 			os.Exit(1)
 		}
 		if err := env.Parse(&Env); err != nil {

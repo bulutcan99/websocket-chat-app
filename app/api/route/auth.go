@@ -10,5 +10,4 @@ import (
 func AuthRoutes(r fiber.Router) {
 	route := r.Group("/v1", middleware.GetNextMiddleWare)
 	route.Post("/register", controller.UserSignUp)
-	route.Post("/login", controller.UserSignIn)
 }

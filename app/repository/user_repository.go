@@ -41,11 +41,7 @@ func (r *UserRepo) ChangePassword(id uuid.UUID, oldPassword string, newPassword 
 	}
 
 	updateQuery := `UPDATE users SET password_hash = $1 WHERE id = $2`
-	hashedPassword, errGen := utility.GeneratePassword(newPassword)
-	if errGen != nil {
-		return custom_error.ValidationError()
-	}
-
+	hashedPassword := utility.GeneratePassword(newPassword)
 	_, err = r.Exec(updateQuery, hashedPassword, id)
 	if err != nil {
 		return custom_error.DatabaseError()

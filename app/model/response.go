@@ -18,12 +18,6 @@ type Success struct {
 	Refresh string `json:"refresh_token,omitempty"`
 }
 
-type ChatRes struct {
-	Message string `json:"message"`
-	Error   bool   `json:"error" default:"false"`
-	Chats   []Chat `json:"chats"`
-}
-
 type TokenMetaData struct {
 	Name    string
 	UserID  uuid.UUID

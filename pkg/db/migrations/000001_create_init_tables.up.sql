@@ -10,7 +10,6 @@ CREATE TABLE users (
     updated_at TIMESTAMP NULL,
     email VARCHAR (255) NOT NULL UNIQUE,
     name_surname VARCHAR (100) NOT NULL,
-    surname  VARCHAR (50) NOT NULL,
     password_hash VARCHAR (255) NOT NULL,
     user_status INT NOT NULL,
     user_role VARCHAR (25) NOT NULL

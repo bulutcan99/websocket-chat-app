@@ -10,18 +10,11 @@ type Queries struct {
 	UserQueries *repository.UserRepo
 }
 
-func OpenDBConnection() (*Queries, error) {
-	var (
-		db  *sqlx.DB
-		err error
-	)
-
-	if err != nil {
-		return nil, err
-	}
+func SqlQueryInjection() *Queries {
+	var db *sqlx.DB
 
 	return &Queries{
 		AuthQueries: &repository.AuthRepo{DB: db},
 		UserQueries: &repository.UserRepo{DB: db},
-	}, nil
+	}
 }

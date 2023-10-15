@@ -20,7 +20,6 @@ var (
 
 func ConnectionURLBuilder(n string) (string, error) {
 	var url string
-
 	switch n {
 	case "postgres":
 		url = fmt.Sprintf(
