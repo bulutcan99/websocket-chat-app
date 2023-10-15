@@ -3,7 +3,7 @@
 APP_NAME = chatapp
 BUILD_DIR = $(PWD)/build
 MIGRATIONS_FOLDER = $(PWD)/pkg/db/migrations
-DATABASE_URL = postgres://your_username:password@cgapp-postgres/postgres?sslmode=disable
+DATABASE_URL=postgres://postgres:password@localhost:5432/postgres?sslmode=disable
 
 clean:
 	rm -rf ./build

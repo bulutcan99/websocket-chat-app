@@ -19,12 +19,11 @@ type AuthInterface interface {
 }
 
 func (r *AuthRepo) CreateUser(u model.User) error {
-	fmt.Println("Burda")
 	query := `INSERT INTO users VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
 
 	_, err := r.Exec(
 		query,
-		u.ID, u.CreatedAt, u.UpdatedAt, u.Email, u.PasswordHash, u.Status, u.UserRole, u.NameSurname)
+		u.ID, u.CreatedAt, u.UpdatedAt, u.Email, u.NameSurname, u.PasswordHash, u.Status, u.UserRole)
 	if err != nil {
 		fmt.Println("SA")
 		return custom_error.DatabaseError()

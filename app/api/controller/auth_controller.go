@@ -48,6 +48,7 @@ func UserSignUp(c *fiber.Ctx) error {
 		Status:       1,
 		UserRole:     signUp.UserRole,
 	}
+
 	if errCreate := db.AuthQueries.CreateUser(user); errCreate != nil {
 		return custom_error.DatabaseError()
 	}
