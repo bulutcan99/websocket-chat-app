@@ -54,7 +54,7 @@
             $("#submit").attr("disabled", true);
             $("#submit").html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>Signing Up!');
             $.ajax({
-                url: "/api/v1/auth/register",
+                url: "v1/auth/register",
                 type: "POST",
                 data: JSON.stringify(final),
                 contentType: "application/json",

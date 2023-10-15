@@ -8,6 +8,6 @@ import (
 
 // AuthRoutes Base Route = /v1/auth
 func AuthRoutes(r fiber.Router) {
-	route := r.Group("/v1", middleware.GetNextMiddleWare)
+	route := r.Group("/v1/auth", middleware.GetNextMiddleWare)
 	route.Post("/register", controller.UserSignUp)
 }
