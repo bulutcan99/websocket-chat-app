@@ -15,7 +15,7 @@ var (
 	DB_MAX_LIFE_TIME_CON = &env.Env.DbMaxLifetimeConnections
 )
 
-func PostgreSQLConnection() (*sqlx.DB, error) {
+func PostgresSQLConnection() (*sqlx.DB, error) {
 	postgresConnURL, err := ConnectionURLBuilder("postgres")
 	if err != nil {
 		return nil, fmt.Errorf("error while trying to connect to the database, %w", err)

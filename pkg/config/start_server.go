@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	custom_error "github.com/bulutcan99/go-websocket/pkg/error"
 	"log"
 	"os"
 	"os/signal"
@@ -33,22 +32,6 @@ func StartServerWithGracefulShutdown(a *fiber.App) {
 }
 
 func StartServer(a *fiber.App) {
-	redisClient, err := RedisConn()
-	if err != nil {
-		custom_error.ConnectionError()
-		return
-	}
-
-	fmt.Println("Redis connected")
-	defer redisClient.Close()
-	postgresDB, err := PostgreSQLConnection()
-	if err != nil {
-		custom_error.ConnectionError()
-		return
-	}
-
-	fmt.Println("Postgres connected")
-	defer postgresDB.Close()
 	fiberConnURL, _ := ConnectionURLBuilder("fiber")
 	fmt.Println("Fiber connected")
 	if err := a.Listen(fiberConnURL); err != nil {

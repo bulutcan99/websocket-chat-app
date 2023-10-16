@@ -1,38 +1,48 @@
 package controller
 
 import (
+	"context"
 	"fmt"
 	"github.com/bulutcan99/go-websocket/app/model"
-	"github.com/bulutcan99/go-websocket/pkg/db/sql"
+	"github.com/bulutcan99/go-websocket/app/repository"
 	custom_error "github.com/bulutcan99/go-websocket/pkg/error"
+	"github.com/bulutcan99/go-websocket/pkg/helper"
 	"github.com/bulutcan99/go-websocket/pkg/utility"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"time"
 )
 
-func UserSignUp(c *fiber.Ctx) error {
+type AuthController struct {
+	repo *repository.AuthRepo
+}
+
+func NewAuthController(authRepo *repository.AuthRepo) *AuthController {
+	return &AuthController{
+		repo: authRepo,
+	}
+}
+
+func (ac *AuthController) UserSignUp(c *fiber.Ctx) error {
 	signUp := &model.Register{}
 	if err := c.BodyParser(signUp); err != nil {
 		return custom_error.ParseError()
 	}
 
-	// validator.SetValidationFunc("emailvalidator", helper.EmailValidator)
-	// validator.SetValidationFunc("passvalidator", helper.PasswordValidator)
-	// validator.SetValidationFunc("rolevalidator", helper.RoleValidator)
-	// if err := validator.Validate(signUp); err == nil {
-	// 	fmt.Println("Validated.")
-	// } else {
-	// 	return custom_error.ValidationError()
-	// }
+	signUpCtx := context.Background()
+	err := helper.EmailValidator(signUp.Email)
+	if err != nil {
+		return fmt.Errorf("error while trying to set validation funcEmail, %w", err)
+	}
+	err = helper.PasswordValidator(signUp.Password)
+	if err != nil {
+		return fmt.Errorf("error while trying to set validation funcPass, %w", err)
+	}
+	err = helper.RoleValidator(signUp.UserRole)
+	if err != nil {
+		return fmt.Errorf("error while trying to set validation funcRole, %w", err)
+	}
 
-	db := sql.SqlQueryInjection()
-	// errDb := db.UserQueries.DB.Ping()
-	// if errDb != nil {
-	// 	return custom_error.ConnectionError()
-	// }
-
-	fmt.Println("Queries injected")
 	_, errVerify := utility.VerifyRole(signUp.UserRole)
 	if errVerify != nil {
 		return custom_error.ValidationError()
@@ -49,7 +59,7 @@ func UserSignUp(c *fiber.Ctx) error {
 		UserRole:     signUp.UserRole,
 	}
 
-	if errCreate := db.AuthQueries.CreateUser(user); errCreate != nil {
+	if errCreate := ac.repo.CreateUser(signUpCtx, user); errCreate != nil {
 		return custom_error.DatabaseError()
 	}
 
