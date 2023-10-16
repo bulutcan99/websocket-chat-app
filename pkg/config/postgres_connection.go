@@ -17,7 +17,6 @@ var (
 
 func PostgreSQLConnection() (*sqlx.DB, error) {
 	postgresConnURL, err := ConnectionURLBuilder("postgres")
-	fmt.Println(postgresConnURL)
 	if err != nil {
 		return nil, fmt.Errorf("error while trying to connect to the database, %w", err)
 	}

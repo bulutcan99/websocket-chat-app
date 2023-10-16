@@ -7,7 +7,7 @@ import (
 )
 
 type User struct {
-	ID           uuid.UUID `db:"id" json:"user_id" validate:"required,uuid"`
+	ID           uuid.UUID `db:"id" json:"id" validate:"required,uuid"`
 	CreatedAt    time.Time `db:"created_at" json:"created_at"`
 	UpdatedAt    time.Time `db:"updated_at" json:"updated_at"`
 	Email        string    `json:"email" validate:"required,nonzero,emailvalidator"`
