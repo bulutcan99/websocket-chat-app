@@ -10,6 +10,7 @@ import (
 
 type AuthInterface interface {
 	CreateUser(ctx context.Context, u model.User) error
+	GetUserSignByEmail(ctx context.Context, email string) (model.SignIn, error)
 	GetUserById(ctx context.Context, id uuid.UUID) (model.User, error)
 	GetUserRoleById(ctx context.Context, id uuid.UUID) (string, error)
 }
@@ -46,6 +47,17 @@ func (r *AuthRepo) CreateUser(ctx context.Context, u model.User) error {
 	}
 
 	return nil
+}
+
+func (r *AuthRepo) GetUserSignByEmail(ctx context.Context, email string) (*model.User, error) {
+	var user model.User
+	query := `SELECT * FROM users WHERE email = $1`
+	err := r.DB.QueryRowContext(ctx, query, email).Scan(&user.ID, &user.CreatedAt, &user.UpdatedAt, &user.Email, &user.NameSurname, &user.PasswordHash, &user.Status, &user.UserRole)
+	if err != nil {
+		return &user, custom_error.DatabaseError()
+	}
+
+	return &user, nil
 }
 
 func (r *AuthRepo) GetUserById(ctx context.Context, id uuid.UUID) (model.User, error) {

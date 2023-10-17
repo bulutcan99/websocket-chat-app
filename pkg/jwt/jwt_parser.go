@@ -1,10 +1,10 @@
 package jwt
 
 import (
+	"github.com/bulutcan99/go-websocket/app/model"
 	"github.com/google/uuid"
 	"os"
 	"strings"
-	"websocket_chat/app/model"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"

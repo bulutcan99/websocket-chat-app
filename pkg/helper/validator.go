@@ -15,7 +15,6 @@ func EmailValidator(email string) error {
 	if !emailRegex.MatchString(email) {
 		return errors.New("Invalid email address")
 	}
-	fmt.Println("AS")
 	return nil
 }
 
