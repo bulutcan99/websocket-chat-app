@@ -22,16 +22,14 @@ type Tokens struct {
 	Refresh string
 }
 
-func GenerateNewTokens(id string, role string) (*Tokens, error) {
-	accessToken, err := generateNewAccessToken(id, role)
+func GenerateNewTokens(role string) (*Tokens, error) {
+	accessToken, err := generateNewAccessToken(role)
 	if err != nil {
-		// Return token generation error.
 		return nil, err
 	}
 
 	refreshToken, err := generateNewRefreshToken()
 	if err != nil {
-		// Return token generation error.
 		return nil, err
 	}
 
@@ -41,12 +39,11 @@ func GenerateNewTokens(id string, role string) (*Tokens, error) {
 	}, nil
 }
 
-func generateNewAccessToken(id string, role string) (string, error) {
+func generateNewAccessToken(role string) (string, error) {
 	secret := *JWT_SECRET_KEY
 	minutesCount := *JWT_SECRET_KEY_EXPIRE_MINUTE
 
 	claims := jwt.MapClaims{}
-	claims["id"] = id
 	claims["role"] = role
 	claims["expires"] = time.Now().Add(time.Minute * time.Duration(minutesCount)).Unix()
 

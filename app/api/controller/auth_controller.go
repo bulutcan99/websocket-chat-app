@@ -118,7 +118,7 @@ func (ac *AuthController) UserSignIn(c *fiber.Ctx) error {
 	}
 
 	userId := getUser.ID.String()
-	errSaveToRedis := ac.redisCache.Set(context.Background(), userId, accessToken.Refresh, 0).Err()
+	errSaveToRedis := ac.redisCache.Set(context.Background(), userId, accessToken.Refresh, time.Minute*5).Err()
 	if errSaveToRedis != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": true,
@@ -133,5 +133,22 @@ func (ac *AuthController) UserSignIn(c *fiber.Ctx) error {
 			"access":  accessToken.Access,
 			"refresh": accessToken.Refresh,
 		},
+	})
+}
+
+func (ac *AuthController) SignOut(c *fiber.Ctx) error {
+	tokenMetaData, err := jwt.ExtractTokenMetaData(c)
+	if err != nil {
+		return custom_error.ValidationError()
+	}
+
+	deleted, err := ac.redisCache.Del(context.Background(), tokenMetaData.UserID.String()).Result()
+	if err != nil || deleted == 0 {
+		return custom_error.ValidationError()
+	}
+
+	return c.JSON(fiber.Map{
+		"error": false,
+		"msg":   "Logged Out Successfully!",
 	})
 }

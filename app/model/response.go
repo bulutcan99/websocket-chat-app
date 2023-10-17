@@ -1,7 +1,5 @@
 package model
 
-import "github.com/google/uuid"
-
 type RenewToken struct {
 	RefreshToken string `json:"refresh_token"`
 }
@@ -20,7 +18,6 @@ type Success struct {
 
 type TokenMetaData struct {
 	Name    string
-	UserID  uuid.UUID
 	Email   string
 	Role    string
 	Expires int64
