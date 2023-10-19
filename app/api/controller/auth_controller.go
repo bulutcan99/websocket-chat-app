@@ -7,11 +7,13 @@ import (
 	"github.com/bulutcan99/go-websocket/app/repository"
 	custom_error "github.com/bulutcan99/go-websocket/pkg/error"
 	"github.com/bulutcan99/go-websocket/pkg/helper"
-	"github.com/bulutcan99/go-websocket/pkg/jwt"
+	platform "github.com/bulutcan99/go-websocket/pkg/platform/cache"
+	"github.com/bulutcan99/go-websocket/pkg/token"
 	"github.com/bulutcan99/go-websocket/pkg/utility"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
+	"strconv"
 	"time"
 )
 
@@ -22,10 +24,10 @@ type AuthInterface interface {
 
 type AuthController struct {
 	repo       *repository.AuthRepo
-	redisCache *redis.Client
+	redisCache *platform.RedisCache
 }
 
-func NewAuthController(authRepo *repository.AuthRepo, redisC *redis.Client) *AuthController {
+func NewAuthController(authRepo *repository.AuthRepo, redisC *platform.RedisCache) *AuthController {
 	return &AuthController{
 		repo:       authRepo,
 		redisCache: redisC,
@@ -77,12 +79,14 @@ func (ac *AuthController) UserSignUp(c *fiber.Ctx) error {
 
 	return c.JSON(fiber.Map{
 		"error": false,
-		"msg":   nil,
-		"user":  user,
+		"msg":   "User Created Successfully!",
+		"user":  user.NameSurname,
 	})
 }
 
 func (ac *AuthController) UserSignIn(c *fiber.Ctx) error {
+	// Oncelikle mail ile rediste id var mi diye kontrol edilmeli, eger varsa id ile rediste user var mi diye kontrol edilmeli
+	// Ardindan eger ikisi de varsa db cekmeye gerek yok, eger yoksa db cekilmeli ve redise kaydedilmeli
 	signIn := &model.SignIn{}
 	if err := c.BodyParser(signIn); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -107,9 +111,18 @@ func (ac *AuthController) UserSignIn(c *fiber.Ctx) error {
 		})
 	}
 
-	role := getUser.UserRole
+	userCache := model.UserCache{
+		UserID:           getUser.ID.String(),
+		UserEmail:        getUser.Email,
+		UserRole:         getUser.UserRole,
+		UserCreatedAt:    getUser.CreatedAt.String(),
+		UserUpdatedAt:    getUser.UpdatedAt.String(),
+		UserNameSurname:  getUser.NameSurname,
+		UserPasswordHash: getUser.PasswordHash,
+		UserStatus:       strconv.Itoa(getUser.Status),
+	}
 
-	accessToken, err := jwt.GenerateNewTokens(getUser.ID.String(), role)
+	tokens, err := token.GenerateNewTokens(userCache.UserID, userCache.UserRole)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": true,
@@ -117,36 +130,84 @@ func (ac *AuthController) UserSignIn(c *fiber.Ctx) error {
 		})
 	}
 
-	userId := getUser.ID.String()
-	errSaveToRedis := ac.redisCache.Set(context.Background(), userId, accessToken.Refresh, time.Minute*5).Err()
-	if errSaveToRedis != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": true,
-			"msg":   "There is a problem while trying to save redis",
-		})
+	cacheUserEmailKey := fmt.Sprintf("user:email:%s", userCache.UserEmail)
+	_, err = ac.redisCache.SMembers(context.Background(), cacheUserEmailKey).Result()
+	if err == redis.Nil {
+		fmt.Println("No data in for this user: ", userCache.UserEmail)
+		errSaveToRedis := ac.redisCache.SAdd(context.Background(), cacheUserEmailKey, userCache.UserID, time.Hour*12).Err()
+		if errSaveToRedis != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": true,
+				"msg":   "There is a problem while trying to save email to redis",
+			})
+		}
 	}
+
+	cacheUserIdKey := fmt.Sprintf("user:id:%s", userCache.UserID)
+	_, err = ac.redisCache.HGetAll(context.Background(), cacheUserIdKey).Result()
+	if err == redis.Nil {
+		fmt.Println("No data in for this user: ", userCache.UserID)
+		userData := map[string]string{
+			"userEmail":       userCache.UserEmail,
+			"userNameSurname": userCache.UserNameSurname,
+			"userPassword":    userCache.UserPasswordHash,
+			"userCreatedAt":   userCache.UserCreatedAt,
+			"userUpdatedAt":   userCache.UserUpdatedAt,
+			"userRole":        userCache.UserRole,
+			"userStatus":      userCache.UserStatus,
+			"accessToken":     tokens.Access,
+			"refreshToken":    tokens.Refresh,
+		}
+
+		err = ac.redisCache.HMSet(context.Background(), cacheUserIdKey, userData).Err()
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": true,
+				"msg":   "There is a problem while trying to save user to redis",
+			})
+		}
+
+		err = ac.redisCache.Expire(context.Background(), cacheUserIdKey, 12*time.Hour).Err()
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	fmt.Println("burda")
+	cookie := fiber.Cookie{
+		Name:     "jwt",
+		Value:    tokens.Refresh,
+		Expires:  time.Now().Add(time.Hour * 1),
+		HTTPOnly: true,
+	}
+
+	c.Cookie(&cookie)
 
 	return c.JSON(fiber.Map{
 		"error": false,
 		"msg":   "Logged In Successfully!",
 		"tokens": fiber.Map{
-			"access":  accessToken.Access,
-			"refresh": accessToken.Refresh,
+			"access":  tokens.Access,
+			"refresh": tokens.Refresh,
 		},
 	})
 }
 
 func (ac *AuthController) SignOut(c *fiber.Ctx) error {
-	tokenMetaData, err := jwt.ExtractTokenMetaData(c)
-	if err != nil {
-		return custom_error.ValidationError()
-	}
-
-	deleted, err := ac.redisCache.Del(context.Background(), tokenMetaData.UserID.String()).Result()
+	tokenMetaData, err := token.ExtractToken(c)
+	deleted, err := ac.redisCache.Del(context.Background(), tokenMetaData.ID).Result()
 	if err != nil || deleted == 0 {
 		return custom_error.ValidationError()
 	}
 
+	cookie := fiber.Cookie{
+		Name:     "jwt",
+		Value:    "deleted cookie",
+		Expires:  time.Unix(0, 0),
+		HTTPOnly: true,
+	}
+
+	c.Cookie(&cookie)
 	return c.JSON(fiber.Map{
 		"error": false,
 		"msg":   "Logged Out Successfully!",

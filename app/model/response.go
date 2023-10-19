@@ -17,7 +17,7 @@ type Success struct {
 }
 
 type TokenMetaData struct {
-	Name    string
+	ID      string
 	Email   string
 	Role    string
 	Expires int64

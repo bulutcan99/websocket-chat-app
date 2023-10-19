@@ -9,6 +9,7 @@ import (
 	"github.com/bulutcan99/go-websocket/pkg/config"
 	"github.com/bulutcan99/go-websocket/pkg/env"
 	custom_error "github.com/bulutcan99/go-websocket/pkg/error"
+	platform "github.com/bulutcan99/go-websocket/pkg/platform/cache"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/zap"
 	"time"
@@ -41,7 +42,8 @@ func Start() {
 	fmt.Println("Postgres connected")
 	defer postgresDB.Close()
 	authRepo := repository.NewAuthUserRepo(postgresDB)
-	authController := controller.NewAuthController(authRepo, redisClient)
+	redisCache := platform.NewRedisCache(redisClient)
+	authController := controller.NewAuthController(authRepo, redisCache)
 	cfg := config.FiberConfig()
 	app := fiber.New(cfg)
 	middleware.MiddlewareFiber(app)
