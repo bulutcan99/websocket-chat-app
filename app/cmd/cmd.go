@@ -9,40 +9,39 @@ import (
 	"github.com/bulutcan99/go-websocket/db/repository"
 	"github.com/bulutcan99/go-websocket/pkg/config"
 	"github.com/bulutcan99/go-websocket/pkg/env"
-	custom_error "github.com/bulutcan99/go-websocket/pkg/error"
+	"github.com/bulutcan99/go-websocket/pkg/logger"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/zap"
 	"time"
 )
 
 var (
+	Psql          *config.PostgreSQL
+	Redis         *config.Redis
 	Logger        *zap.Logger
 	SchedulerTime time.Duration
-	STAGE_STATUS  = &env.Env.StageStatus
+	Env           *env.ENV
 	stageStatus   = "development"
 )
 
-func Start() {
-	fmt.Println("App started")
+func init() {
 	env.ParseEnv()
-	redisClient, err := config.RedisConn()
-	if err != nil {
-		custom_error.ConnectionError()
-		return
-	}
+	Logger = logger.InitLogger(Env.LogLevel)
+	Psql = config.NewPostgreSQLConnection()
+	zap.S().Info("Postgres connected")
+	Redis = config.NewRedisConnection()
+	zap.S().Info("Redis connected")
 
-	fmt.Println("Redis connected")
-	defer redisClient.Close()
-	postgresDB, err := config.PostgresSQLConnection()
-	if err != nil {
-		custom_error.ConnectionError()
-		return
-	}
+}
 
-	fmt.Println("Postgres connected")
-	defer postgresDB.Close()
-	authRepo := repository.NewAuthUserRepo(postgresDB)
-	redisCache := platform.NewRedisCache(redisClient)
+func Start() {
+	defer Logger.Sync()
+	defer Psql.Close()
+	defer Redis.Close()
+	fmt.Println("App started")
+
+	authRepo := repository.NewAuthUserRepo(Psql)
+	redisCache := platform.NewRedisCache(Redis)
 	authController := controller.NewAuthController(authRepo, redisCache)
 	cfg := config.FiberConfig()
 	app := fiber.New(cfg)
@@ -50,7 +49,7 @@ func Start() {
 	app.Static("/static", "./static")
 	route.Index("/", app)
 	route.AuthRoutes(app, authController)
-	if *STAGE_STATUS == stageStatus {
+	if Env.StageStatus == stageStatus {
 		config.StartServer(app)
 	} else {
 		config.StartServerWithGracefulShutdown(app)

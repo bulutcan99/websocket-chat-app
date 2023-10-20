@@ -1,20 +1,30 @@
 package repository
 
 import (
+	"context"
 	"github.com/bulutcan99/go-websocket/model"
+	"github.com/bulutcan99/go-websocket/pkg/config"
 	custom_error "github.com/bulutcan99/go-websocket/pkg/error"
 	"github.com/bulutcan99/go-websocket/pkg/utility"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 )
 
-type UserRepo struct {
-	*sqlx.DB
-}
-
 type UserInterface interface {
 	GetShownedUserByEmail(email string) (model.UserShown, error)
 	ChangePassword(id uuid.UUID, oldPassword string, newPassword string) error
+}
+
+type UserRepo struct {
+	db      *sqlx.DB
+	context context.Context
+}
+
+func NewUserRepo(psql *config.PostgreSQL) *UserRepo {
+	return &UserRepo{
+		db:      psql.DB,
+		context: psql.Context,
+	}
 }
 
 func (r *UserRepo) GetShownedUserByEmail(email string) (model.UserShown, error) {

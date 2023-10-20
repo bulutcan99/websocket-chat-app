@@ -2,8 +2,13 @@ package cache
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"github.com/bulutcan99/go-websocket/model"
+	"github.com/bulutcan99/go-websocket/pkg/config"
+	"github.com/bulutcan99/go-websocket/pkg/token"
 	"github.com/redis/go-redis/v9"
+	"strconv"
 	"time"
 )
 
@@ -18,11 +23,6 @@ type UserCache struct {
 	UserStatus       string `json:"status"`
 }
 
-type UserCacheToken struct {
-	UserAccessToken  string `json:"access_token"`
-	UserRefreshToken string `json:"refresh_token"`
-}
-
 type RedisCacheInterface interface {
 	GetUserId(email string) (string, error)
 	GetUserData(id string) (*UserCache, error)
@@ -31,18 +31,20 @@ type RedisCacheInterface interface {
 }
 
 type RedisCache struct {
-	RedisCache *redis.Client
+	client  *redis.Client
+	context context.Context
 }
 
-func NewRedisCache(redisCache *redis.Client) *RedisCache {
+func NewRedisCache(redis *config.Redis) *RedisCache {
 	return &RedisCache{
-		RedisCache: redisCache,
+		client:  redis.Client,
+		context: redis.Context,
 	}
 }
 
 func (rc *RedisCache) GetUserId(email string) (*string, error) {
-	cacheUserEmailKey := fmt.Sprintf("user:email:%s", email)
-	userID, err := rc.RedisCache.Get(context.Background(), cacheUserEmailKey).Result()
+	cacheUserEmailKey := fmt.Sprintf("user:email:%s:id", email)
+	userID, err := rc.client.Get(rc.context, cacheUserEmailKey).Result()
 	if err != nil {
 		return nil, err
 	}
@@ -51,44 +53,38 @@ func (rc *RedisCache) GetUserId(email string) (*string, error) {
 }
 
 func (rc *RedisCache) GetUserData(id string) (*UserCache, error) {
-	cacheUserIdKey := fmt.Sprintf("user:id:%s", id)
-	userData, err := rc.RedisCache.HGetAll(context.Background(), cacheUserIdKey).Result()
+	cacheUserIdKey := fmt.Sprintf("user:id:%s:data", id)
+	userData, err := rc.client.Get(rc.context, cacheUserIdKey).Result()
 	if err != nil {
 		return nil, err
 	}
 
-	user := &UserCache{
-		UserID:           id,
-		UserEmail:        userData["userEmail"],
-		UserRole:         userData["userRole"],
-		UserCreatedAt:    userData["userCreatedAt"],
-		UserUpdatedAt:    userData["userUpdatedAt"],
-		UserNameSurname:  userData["userNameSurname"],
-		UserPasswordHash: userData["userPassword"],
-		UserStatus:       userData["userStatus"],
+	var user UserCache
+	if err := json.Unmarshal([]byte(userData), &user); err != nil {
+		return nil, err
 	}
 
-	return user, nil
+	return &user, nil
 }
 
-func (rc *RedisCache) GetUserTokenData(id string) (*UserCacheToken, error) {
-	cacheUserIdKey := fmt.Sprintf("user:id:token:%s", id)
-	userData, err := rc.RedisCache.HGetAll(context.Background(), cacheUserIdKey).Result()
+func (rc *RedisCache) GetUserTokenData(id string) (*token.Tokens, error) {
+	cacheUserIdKey := fmt.Sprintf("user:id:%s:token", id)
+	userData, err := rc.client.Get(rc.context, cacheUserIdKey).Result()
 	if err != nil {
 		return nil, err
 	}
 
-	user := &UserCacheToken{
-		UserAccessToken:  userData["userAccessToken"],
-		UserRefreshToken: userData["userRefreshToken"],
+	var tokens token.Tokens
+	if err := json.Unmarshal([]byte(userData), &tokens); err != nil {
+		return nil, err
 	}
 
-	return user, nil
+	return &tokens, nil
 }
 
 func (rc *RedisCache) SetUserId(email string, id string) error {
-	cacheUserEmailKey := fmt.Sprintf("user:email:%s", email)
-	err := rc.RedisCache.Set(context.Background(), cacheUserEmailKey, id, 24*time.Hour).Err()
+	cacheUserEmailKey := fmt.Sprintf("user:email:%s:id", email)
+	err := rc.client.Set(rc.context, cacheUserEmailKey, id, 24*time.Hour).Err()
 	if err != nil {
 		return err
 	}
@@ -96,24 +92,14 @@ func (rc *RedisCache) SetUserId(email string, id string) error {
 	return nil
 }
 
-func (rc *RedisCache) SetUserData(id string, user UserCache) error {
-	cacheUserIdKey := fmt.Sprintf("user:id:%s", id)
-	userData := map[string]interface{}{
-		"userEmail":       user.UserEmail,
-		"userNameSurname": user.UserNameSurname,
-		"userPassword":    user.UserPasswordHash,
-		"userCreatedAt":   user.UserCreatedAt,
-		"userUpdatedAt":   user.UserUpdatedAt,
-		"userRole":        user.UserRole,
-		"userStatus":      user.UserStatus,
-	}
-
-	err := rc.RedisCache.HMSet(context.Background(), cacheUserIdKey, userData).Err()
+func (rc *RedisCache) SetUserData(id string, user *UserCache) error {
+	cacheUserIdKey := fmt.Sprintf("user:id:%s:data", id)
+	userData, err := json.Marshal(user)
 	if err != nil {
 		return err
 	}
 
-	err = rc.RedisCache.Expire(context.Background(), cacheUserIdKey, 24*time.Hour).Err()
+	err = rc.client.Set(rc.context, cacheUserIdKey, userData, 24*time.Hour).Err()
 	if err != nil {
 		return err
 	}
@@ -121,22 +107,62 @@ func (rc *RedisCache) SetUserData(id string, user UserCache) error {
 	return nil
 }
 
-func (rc *RedisCache) SetUserToken(id string, tokens UserCacheToken) error {
-	cacheUserIdKey := fmt.Sprintf("user:id:token:%s", id)
-	token := map[string]interface{}{
-		"accessToken":  tokens.UserAccessToken,
-		"refreshToken": tokens.UserRefreshToken,
-	}
-
-	err := rc.RedisCache.HMSet(context.Background(), cacheUserIdKey, token).Err()
+func (rc *RedisCache) SetUserToken(id string, tokens *token.Tokens) error {
+	cacheUserIdKey := fmt.Sprintf("user:id:%s:token", id)
+	tokenData, err := json.Marshal(tokens)
 	if err != nil {
 		return err
 	}
 
-	err = rc.RedisCache.Expire(context.Background(), cacheUserIdKey, 24*time.Hour).Err()
+	err = rc.client.Set(rc.context, cacheUserIdKey, tokenData, 24*time.Hour).Err()
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func (rc *RedisCache) DeleteUserId(email string) error {
+	cacheUserEmailKey := fmt.Sprintf("user:email:%s:id", email)
+	err := rc.client.Del(rc.context, cacheUserEmailKey).Err()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (rc *RedisCache) DeleteUserData(id string) error {
+	cacheUserIdKey := fmt.Sprintf("user:id:%s:data", id)
+	err := rc.client.Del(rc.context, cacheUserIdKey).Err()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (rc *RedisCache) DeleteUserToken(id string) error {
+	cacheUserIdKey := fmt.Sprintf("user:id:%s:token", id)
+	err := rc.client.Del(rc.context, cacheUserIdKey).Err()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (rc *RedisCache) CacheUserData(user model.User) error {
+	userCache := UserCache{
+		UserID:           user.ID.String(),
+		UserEmail:        user.Email,
+		UserRole:         user.UserRole,
+		UserCreatedAt:    user.CreatedAt.String(),
+		UserUpdatedAt:    user.UpdatedAt.String(),
+		UserNameSurname:  user.NameSurname,
+		UserPasswordHash: user.PasswordHash,
+		UserStatus:       strconv.Itoa(user.Status),
+	}
+
+	return rc.SetUserData(user.ID.String(), &userCache)
 }

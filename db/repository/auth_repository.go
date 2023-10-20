@@ -3,29 +3,32 @@ package repository
 import (
 	"context"
 	"github.com/bulutcan99/go-websocket/model"
+	"github.com/bulutcan99/go-websocket/pkg/config"
 	custom_error "github.com/bulutcan99/go-websocket/pkg/error"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 )
 
 type AuthInterface interface {
-	CreateUser(ctx context.Context, u model.User) error
-	GetUserSignByEmail(ctx context.Context, email string) (model.SignIn, error)
-	GetUserById(ctx context.Context, id uuid.UUID) (model.User, error)
-	GetUserRoleById(ctx context.Context, id uuid.UUID) (string, error)
+	CreateUser(r.context context.Context, u model.User) error
+	GetUserSignByEmail(r.context context.Context, email string) (model.SignIn, error)
+	GetUserById(r.context context.Context, id uuid.UUID) (model.User, error)
+	GetUserRoleById(r.context context.Context, id uuid.UUID) (string, error)
 }
 
 type AuthRepo struct {
-	DB *sqlx.DB
+	db      *sqlx.DB
+	context context.Context
 }
 
-func NewAuthUserRepo(db *sqlx.DB) *AuthRepo {
+func NewAuthUserRepo(psql *config.PostgreSQL) *AuthRepo {
 	return &AuthRepo{
-		DB: db,
+		db:      psql.DB,
+		context: psql.Context,
 	}
 }
 
-func (r *AuthRepo) CreateUser(ctx context.Context, u model.User) error {
+func (r *AuthRepo) CreateUser(u model.User) error {
 	query := `
         INSERT INTO users (
             id,
@@ -37,8 +40,8 @@ func (r *AuthRepo) CreateUser(ctx context.Context, u model.User) error {
             user_status,
             user_role
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
-	_, err := r.DB.ExecContext(
-		ctx,
+	_, err := r.db.ExecContext(
+		r.context,
 		query,
 		u.ID, u.CreatedAt, u.UpdatedAt, u.Email, u.NameSurname, u.PasswordHash, u.Status, u.UserRole,
 	)
@@ -49,10 +52,10 @@ func (r *AuthRepo) CreateUser(ctx context.Context, u model.User) error {
 	return nil
 }
 
-func (r *AuthRepo) GetUserSignByEmail(ctx context.Context, email string) (*model.User, error) {
+func (r *AuthRepo) GetUserSignByEmail(email string) (*model.User, error) {
 	var user model.User
 	query := `SELECT * FROM users WHERE email = $1`
-	err := r.DB.QueryRowContext(ctx, query, email).Scan(&user.ID, &user.CreatedAt, &user.UpdatedAt, &user.Email, &user.NameSurname, &user.PasswordHash, &user.Status, &user.UserRole)
+	err := r.db.QueryRowContext(r.context, query, email).Scan(&user.ID, &user.CreatedAt, &user.UpdatedAt, &user.Email, &user.NameSurname, &user.PasswordHash, &user.Status, &user.UserRole)
 	if err != nil {
 		return &user, custom_error.DatabaseError()
 	}
@@ -60,10 +63,10 @@ func (r *AuthRepo) GetUserSignByEmail(ctx context.Context, email string) (*model
 	return &user, nil
 }
 
-func (r *AuthRepo) GetUserById(ctx context.Context, id uuid.UUID) (model.User, error) {
+func (r *AuthRepo) GetUserById(id uuid.UUID) (model.User, error) {
 	var user model.User
 	query := `SELECT * FROM users WHERE id = $1`
-	err := r.DB.QueryRowContext(ctx, query, id).Scan(&user.ID, &user.CreatedAt, &user.UpdatedAt, &user.Email, &user.NameSurname, &user.PasswordHash, &user.Status, &user.UserRole)
+	err := r.db.QueryRowContext(r.context, query, id).Scan(&user.ID, &user.CreatedAt, &user.UpdatedAt, &user.Email, &user.NameSurname, &user.PasswordHash, &user.Status, &user.UserRole)
 	if err != nil {
 		return model.User{}, custom_error.DatabaseError()
 	}
@@ -71,10 +74,10 @@ func (r *AuthRepo) GetUserById(ctx context.Context, id uuid.UUID) (model.User, e
 	return user, nil
 }
 
-func (r *AuthRepo) GetUserRoleById(ctx context.Context, id uuid.UUID) (string, error) {
+func (r *AuthRepo) GetUserRoleById(id uuid.UUID) (string, error) {
 	var userRole string
 	query := `SELECT user_role FROM users WHERE id = $1`
-	err := r.DB.QueryRowContext(ctx, query, id).Scan(&userRole)
+	err := r.db.QueryRowContext(r.context, query, id).Scan(&userRole)
 	if err != nil {
 		return "", custom_error.DatabaseError()
 	}
