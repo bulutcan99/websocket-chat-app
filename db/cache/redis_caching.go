@@ -88,7 +88,7 @@ func (rc *RedisCache) GetUserTokenData(id string) (*UserCacheToken, error) {
 
 func (rc *RedisCache) SetUserId(email string, id string) error {
 	cacheUserEmailKey := fmt.Sprintf("user:email:%s", email)
-	err := rc.RedisCache.Set(context.Background(), cacheUserEmailKey, id, time.Hour*12).Err()
+	err := rc.RedisCache.Set(context.Background(), cacheUserEmailKey, id, 24*time.Hour).Err()
 	if err != nil {
 		return err
 	}
@@ -113,7 +113,7 @@ func (rc *RedisCache) SetUserData(id string, user UserCache) error {
 		return err
 	}
 
-	err = rc.RedisCache.Expire(context.Background(), cacheUserIdKey, 12*time.Hour).Err()
+	err = rc.RedisCache.Expire(context.Background(), cacheUserIdKey, 24*time.Hour).Err()
 	if err != nil {
 		return err
 	}
@@ -133,7 +133,7 @@ func (rc *RedisCache) SetUserToken(id string, tokens UserCacheToken) error {
 		return err
 	}
 
-	err = rc.RedisCache.Expire(context.Background(), cacheUserIdKey, 12*time.Hour).Err()
+	err = rc.RedisCache.Expire(context.Background(), cacheUserIdKey, 24*time.Hour).Err()
 	if err != nil {
 		return err
 	}
