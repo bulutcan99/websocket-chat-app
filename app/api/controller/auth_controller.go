@@ -4,10 +4,11 @@ import (
 	"context"
 	"fmt"
 	"github.com/bulutcan99/go-websocket/app/model"
-	"github.com/bulutcan99/go-websocket/app/repository"
 	custom_error "github.com/bulutcan99/go-websocket/pkg/error"
 	"github.com/bulutcan99/go-websocket/pkg/helper"
+	model2 "github.com/bulutcan99/go-websocket/pkg/model"
 	platform "github.com/bulutcan99/go-websocket/pkg/platform/cache"
+	"github.com/bulutcan99/go-websocket/pkg/platform/repository"
 	"github.com/bulutcan99/go-websocket/pkg/token"
 	"github.com/bulutcan99/go-websocket/pkg/utility"
 	"github.com/gofiber/fiber/v2"
@@ -35,7 +36,7 @@ func NewAuthController(authRepo *repository.AuthRepo, redisC *platform.RedisCach
 }
 
 func (ac *AuthController) UserSignUp(c *fiber.Ctx) error {
-	signUp := &model.Register{}
+	signUp := &model2.Register{}
 	if err := c.BodyParser(signUp); err != nil {
 		return custom_error.ParseError()
 	}
@@ -62,7 +63,7 @@ func (ac *AuthController) UserSignUp(c *fiber.Ctx) error {
 		return custom_error.ValidationError()
 	}
 
-	user := model.User{
+	user := model2.User{
 		ID:           uuid.New(),
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),
@@ -87,7 +88,7 @@ func (ac *AuthController) UserSignUp(c *fiber.Ctx) error {
 func (ac *AuthController) UserSignIn(c *fiber.Ctx) error {
 	// Oncelikle mail ile rediste id var mi diye kontrol edilmeli, eger varsa id ile rediste user var mi diye kontrol edilmeli
 	// Ardindan eger ikisi de varsa db cekmeye gerek yok, eger yoksa db cekilmeli ve redise kaydedilmeli
-	signIn := &model.SignIn{}
+	signIn := &model2.SignIn{}
 	if err := c.BodyParser(signIn); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": true,

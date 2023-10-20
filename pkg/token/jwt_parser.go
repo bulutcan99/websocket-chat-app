@@ -1,8 +1,8 @@
 package token
 
 import (
-	"github.com/bulutcan99/go-websocket/app/model"
 	"github.com/bulutcan99/go-websocket/pkg/env"
+	"github.com/bulutcan99/go-websocket/pkg/model"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"

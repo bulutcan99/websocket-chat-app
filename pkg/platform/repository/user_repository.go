@@ -1,8 +1,8 @@
 package repository
 
 import (
-	"github.com/bulutcan99/go-websocket/app/model"
 	custom_error "github.com/bulutcan99/go-websocket/pkg/error"
+	"github.com/bulutcan99/go-websocket/pkg/model"
 	"github.com/bulutcan99/go-websocket/pkg/utility"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
