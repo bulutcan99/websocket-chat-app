@@ -2,16 +2,16 @@ package repository
 
 import (
 	"context"
+	"github.com/bulutcan99/go-websocket/model"
 	custom_error "github.com/bulutcan99/go-websocket/pkg/error"
-	model2 "github.com/bulutcan99/go-websocket/pkg/model"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 )
 
 type AuthInterface interface {
-	CreateUser(ctx context.Context, u model2.User) error
-	GetUserSignByEmail(ctx context.Context, email string) (model2.SignIn, error)
-	GetUserById(ctx context.Context, id uuid.UUID) (model2.User, error)
+	CreateUser(ctx context.Context, u model.User) error
+	GetUserSignByEmail(ctx context.Context, email string) (model.SignIn, error)
+	GetUserById(ctx context.Context, id uuid.UUID) (model.User, error)
 	GetUserRoleById(ctx context.Context, id uuid.UUID) (string, error)
 }
 
@@ -25,7 +25,7 @@ func NewAuthUserRepo(db *sqlx.DB) *AuthRepo {
 	}
 }
 
-func (r *AuthRepo) CreateUser(ctx context.Context, u model2.User) error {
+func (r *AuthRepo) CreateUser(ctx context.Context, u model.User) error {
 	query := `
         INSERT INTO users (
             id,
@@ -49,8 +49,8 @@ func (r *AuthRepo) CreateUser(ctx context.Context, u model2.User) error {
 	return nil
 }
 
-func (r *AuthRepo) GetUserSignByEmail(ctx context.Context, email string) (*model2.User, error) {
-	var user model2.User
+func (r *AuthRepo) GetUserSignByEmail(ctx context.Context, email string) (*model.User, error) {
+	var user model.User
 	query := `SELECT * FROM users WHERE email = $1`
 	err := r.DB.QueryRowContext(ctx, query, email).Scan(&user.ID, &user.CreatedAt, &user.UpdatedAt, &user.Email, &user.NameSurname, &user.PasswordHash, &user.Status, &user.UserRole)
 	if err != nil {
@@ -60,12 +60,12 @@ func (r *AuthRepo) GetUserSignByEmail(ctx context.Context, email string) (*model
 	return &user, nil
 }
 
-func (r *AuthRepo) GetUserById(ctx context.Context, id uuid.UUID) (model2.User, error) {
-	var user model2.User
+func (r *AuthRepo) GetUserById(ctx context.Context, id uuid.UUID) (model.User, error) {
+	var user model.User
 	query := `SELECT * FROM users WHERE id = $1`
 	err := r.DB.QueryRowContext(ctx, query, id).Scan(&user.ID, &user.CreatedAt, &user.UpdatedAt, &user.Email, &user.NameSurname, &user.PasswordHash, &user.Status, &user.UserRole)
 	if err != nil {
-		return model2.User{}, custom_error.DatabaseError()
+		return model.User{}, custom_error.DatabaseError()
 	}
 
 	return user, nil

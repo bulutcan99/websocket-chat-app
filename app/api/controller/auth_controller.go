@@ -3,12 +3,11 @@ package controller
 import (
 	"context"
 	"fmt"
-	"github.com/bulutcan99/go-websocket/app/model"
+	"github.com/bulutcan99/go-websocket/db/cache"
+	"github.com/bulutcan99/go-websocket/db/repository"
+	"github.com/bulutcan99/go-websocket/model"
 	custom_error "github.com/bulutcan99/go-websocket/pkg/error"
 	"github.com/bulutcan99/go-websocket/pkg/helper"
-	model2 "github.com/bulutcan99/go-websocket/pkg/model"
-	platform "github.com/bulutcan99/go-websocket/pkg/platform/cache"
-	"github.com/bulutcan99/go-websocket/pkg/platform/repository"
 	"github.com/bulutcan99/go-websocket/pkg/token"
 	"github.com/bulutcan99/go-websocket/pkg/utility"
 	"github.com/gofiber/fiber/v2"
@@ -25,10 +24,10 @@ type AuthInterface interface {
 
 type AuthController struct {
 	repo       *repository.AuthRepo
-	redisCache *platform.RedisCache
+	redisCache *cache.RedisCache
 }
 
-func NewAuthController(authRepo *repository.AuthRepo, redisC *platform.RedisCache) *AuthController {
+func NewAuthController(authRepo *repository.AuthRepo, redisC *cache.RedisCache) *AuthController {
 	return &AuthController{
 		repo:       authRepo,
 		redisCache: redisC,
@@ -36,7 +35,7 @@ func NewAuthController(authRepo *repository.AuthRepo, redisC *platform.RedisCach
 }
 
 func (ac *AuthController) UserSignUp(c *fiber.Ctx) error {
-	signUp := &model2.Register{}
+	signUp := &model.Register{}
 	if err := c.BodyParser(signUp); err != nil {
 		return custom_error.ParseError()
 	}
@@ -63,7 +62,7 @@ func (ac *AuthController) UserSignUp(c *fiber.Ctx) error {
 		return custom_error.ValidationError()
 	}
 
-	user := model2.User{
+	user := model.User{
 		ID:           uuid.New(),
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),
@@ -88,7 +87,7 @@ func (ac *AuthController) UserSignUp(c *fiber.Ctx) error {
 func (ac *AuthController) UserSignIn(c *fiber.Ctx) error {
 	// Oncelikle mail ile rediste id var mi diye kontrol edilmeli, eger varsa id ile rediste user var mi diye kontrol edilmeli
 	// Ardindan eger ikisi de varsa db cekmeye gerek yok, eger yoksa db cekilmeli ve redise kaydedilmeli
-	signIn := &model2.SignIn{}
+	signIn := &model.SignIn{}
 	if err := c.BodyParser(signIn); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": true,
@@ -96,52 +95,60 @@ func (ac *AuthController) UserSignIn(c *fiber.Ctx) error {
 		})
 	}
 
-	getUser, err := ac.repo.GetUserSignByEmail(context.Background(), signIn.Email)
-	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"error": true,
-			"msg":   "Given email is not found",
-		})
-	}
+	getCachedUserId, err := ac.redisCache.GetUserId(signIn.Email)
+	if err != nil && err != redis.Nil {
+		getUser, err := ac.repo.GetUserSignByEmail(context.Background(), signIn.Email)
+		if err != nil {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"error": true,
+				"msg":   "Given email is not found",
+			})
 
-	isComparedUserPass := utility.ComparePasswords(getUser.PasswordHash, signIn.Password)
-	if !isComparedUserPass {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": true,
-			"msg":   "Given password is not correct",
-		})
-	}
-
-	userCache := model.UserCache{
-		UserID:           getUser.ID.String(),
-		UserEmail:        getUser.Email,
-		UserRole:         getUser.UserRole,
-		UserCreatedAt:    getUser.CreatedAt.String(),
-		UserUpdatedAt:    getUser.UpdatedAt.String(),
-		UserNameSurname:  getUser.NameSurname,
-		UserPasswordHash: getUser.PasswordHash,
-		UserStatus:       strconv.Itoa(getUser.Status),
-	}
-
-	tokens, err := token.GenerateNewTokens(userCache.UserID, userCache.UserRole)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": true,
-			"msg":   "There is a problem while trying to generate new tokens",
-		})
-	}
-
-	cacheUserEmailKey := fmt.Sprintf("user:email:%s", userCache.UserEmail)
-	_, err = ac.redisCache.SMembers(context.Background(), cacheUserEmailKey).Result()
-	if err == redis.Nil {
-		fmt.Println("No data in for this user: ", userCache.UserEmail)
-		errSaveToRedis := ac.redisCache.SAdd(context.Background(), cacheUserEmailKey, userCache.UserID, time.Hour*12).Err()
-		if errSaveToRedis != nil {
+		}
+		err = ac.redisCache.SetUserId(getUser.Email, getUser.ID.String())
+		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": true,
 				"msg":   "There is a problem while trying to save email to redis",
 			})
 		}
+
+		user := cache.UserCache{
+			UserID:           getUser.ID.String(),
+			UserEmail:        getUser.Email,
+			UserRole:         getUser.UserRole,
+			UserCreatedAt:    getUser.CreatedAt.String(),
+			UserUpdatedAt:    getUser.UpdatedAt.String(),
+			UserNameSurname:  getUser.NameSurname,
+			UserPasswordHash: getUser.PasswordHash,
+			UserStatus:       strconv.Itoa(getUser.Status),
+		}
+		err = ac.redisCache.SetUserData(getUser.ID.String(), user)
+	} else {
+		getUser, err := ac.redisCache.GetUserData(*getCachedUserId)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": true,
+				"msg":   "There is a problem while trying to get user data from redis",
+			})
+		}
+
+		isComparedUserPass := utility.ComparePasswords(getUser.UserPasswordHash, signIn.Password)
+		if !isComparedUserPass {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error": true,
+				"msg":   "Given password is not correct",
+			})
+		}
+
+		tokens, err := token.GenerateNewTokens(getUser.UserID, getUser.UserRole)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": true,
+				"msg":   "There is a problem while trying to generate new tokens",
+			})
+		}
+
 	}
 
 	cacheUserIdKey := fmt.Sprintf("user:id:%s", userCache.UserID)
