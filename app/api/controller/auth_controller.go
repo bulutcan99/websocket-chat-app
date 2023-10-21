@@ -17,8 +17,9 @@ import (
 )
 
 type AuthInterface interface {
-	UserSignUp(c *fiber.Ctx) error
+	UserRegister(c *fiber.Ctx) error
 	UserSignIn(c *fiber.Ctx) error
+	UserSignOut(c *fiber.Ctx) error
 }
 
 type AuthController struct {
@@ -33,7 +34,7 @@ func NewAuthController(authRepo *repository.AuthRepo, redisC *cache.RedisCache) 
 	}
 }
 
-func (ac *AuthController) UserSignUp(c *fiber.Ctx) error {
+func (ac *AuthController) UserRegister(c *fiber.Ctx) error {
 	signUp := &model.Register{}
 	if err := c.BodyParser(signUp); err != nil {
 		return custom_error.ParseError()
@@ -54,7 +55,7 @@ func (ac *AuthController) UserSignUp(c *fiber.Ctx) error {
 			"msg":   "Role must be admin or user",
 		})
 	}
-
+	fmt.Println("3131")
 	_, errVerify := utility.VerifyRole(signUp.UserRole)
 	if errVerify != nil {
 		return custom_error.ValidationError()
@@ -72,17 +73,21 @@ func (ac *AuthController) UserSignUp(c *fiber.Ctx) error {
 	}
 
 	if errCreate := ac.repo.CreateUser(user); errCreate != nil {
-		return custom_error.DatabaseError()
+		errMsg := fmt.Sprintf("There is an error while create: %v", errCreate)
+		return c.JSON(fiber.Map{
+			"error": true,
+			"msg":   errMsg,
+		})
 	}
 
 	return c.JSON(fiber.Map{
 		"error": false,
-		"msg":   "User created successfully! User ID: " + user.ID.String(),
+		"msg":   "User created successfully!",
 		"user":  user,
 	})
 }
 
-func (ac *AuthController) UserSignIn(c *fiber.Ctx) error {
+func (ac *AuthController) UserLogin(c *fiber.Ctx) error {
 	signIn := &model.SignIn{}
 	if err := c.BodyParser(signIn); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -129,6 +134,7 @@ func (ac *AuthController) UserSignIn(c *fiber.Ctx) error {
 			},
 		})
 	} else {
+		zap.S().Info("User data already in redis cache!")
 		isComparedUserPass := utility.ComparePasswords(userDataWithCache.UserPasswordHash, signIn.Password)
 		if !isComparedUserPass {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
@@ -164,8 +170,8 @@ func (ac *AuthController) UserSignIn(c *fiber.Ctx) error {
 	}
 }
 
-func (ac *AuthController) SignOut(c *fiber.Ctx) error {
-	tokenMetaData, err := token.ExtractToken(c)
+func (ac *AuthController) UserLogOut(c *fiber.Ctx) error {
+	tokenMetaData, err := token.ExtractTokenMetaData(c)
 	err = ac.redisCache.DeleteAllUserData(tokenMetaData.Email, tokenMetaData.ID)
 	if err != nil {
 		return c.JSON(fiber.Map{

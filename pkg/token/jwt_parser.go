@@ -15,7 +15,7 @@ var (
 
 var jwtKey = []byte(*JWT_KEY)
 
-func ExtractToken(c *fiber.Ctx) (*model.TokenMetaData, error) {
+func ExtractTokenMetaData(c *fiber.Ctx) (*model.TokenMetaData, error) {
 	token, err := verifyToken(c)
 	if err != nil {
 		_ = c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{

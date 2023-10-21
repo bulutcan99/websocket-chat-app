@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/bulutcan99/go-websocket/pkg/env"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	_ "github.com/jackc/pgx/v4/stdlib"
 	"github.com/jmoiron/sqlx"
 	"time"
 )
@@ -22,6 +23,7 @@ type PostgreSQL struct {
 
 func NewPostgreSQLConnection() *PostgreSQL {
 	postgresConnURL, err := ConnectionURLBuilder("postgres")
+	fmt.Println(postgresConnURL)
 	if err != nil {
 		panic(err)
 	}

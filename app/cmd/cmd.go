@@ -25,7 +25,7 @@ var (
 )
 
 func init() {
-	env.ParseEnv()
+	Env = env.ParseEnv()
 	Logger = logger.InitLogger(Env.LogLevel)
 	Psql = config.NewPostgreSQLConnection()
 	zap.S().Info("Postgres connected")

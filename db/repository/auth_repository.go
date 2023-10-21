@@ -10,10 +10,10 @@ import (
 )
 
 type AuthInterface interface {
-	CreateUser(r.context context.Context, u model.User) error
-	GetUserSignByEmail(r.context context.Context, email string) (model.SignIn, error)
-	GetUserById(r.context context.Context, id uuid.UUID) (model.User, error)
-	GetUserRoleById(r.context context.Context, id uuid.UUID) (string, error)
+	CreateUser(u model.User) error
+	GetUserSignByEmail(email string) (model.SignIn, error)
+	GetUserById(id uuid.UUID) (model.User, error)
+	GetUserRoleById(id uuid.UUID) (string, error)
 }
 
 type AuthRepo struct {
@@ -46,7 +46,7 @@ func (r *AuthRepo) CreateUser(u model.User) error {
 		u.ID, u.CreatedAt, u.UpdatedAt, u.Email, u.NameSurname, u.PasswordHash, u.Status, u.UserRole,
 	)
 	if err != nil {
-		return custom_error.DatabaseError()
+		return err
 	}
 
 	return nil
