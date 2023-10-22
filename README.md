@@ -1,2 +1,1 @@
-# go-websocket-chat-app
-Backend system for a simple chatting application developed to can be used as a boilerplate.
+Simple chatting application that developed to be used as boilerplate.
