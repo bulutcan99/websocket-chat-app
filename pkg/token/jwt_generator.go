@@ -12,13 +12,17 @@ import (
 )
 
 var (
-	JWT_SECRET_KEY               = &env.Env.JwtSecretKey
-	JWT_SECRET_KEY_EXPIRE_MINUTE = &env.Env.JwtSecretKeyExpireMinutesCount
-	JWT_SECRET_KEY_EXPIRE_HOUR   = &env.Env.JwtRefreshKeyExpireHoursCount
-	privateKey                   = []byte(*JWT_SECRET_KEY)
-	minutesCount                 = *JWT_SECRET_KEY_EXPIRE_MINUTE
-	hoursCount                   = *JWT_SECRET_KEY_EXPIRE_HOUR
+	JWT_SECRET_KEY             = &env.Env.JwtSecretKey
+	JWT_SECRET_KEY_EXPIRE_TIME = &env.Env.JwtSecretKeyExpireTime
+	JWT_SECRET_KEY_EXPIRE_HOUR = &env.Env.JwtRefreshKeyExpireHoursCount
 )
+
+type TokenMetaData struct {
+	ID      string
+	Email   string
+	Role    string
+	Expires int64
+}
 
 type Tokens struct {
 	Access  string
@@ -43,13 +47,16 @@ func GenerateNewTokens(id string, role string) (*Tokens, error) {
 }
 
 func generateNewAccessToken(id string, role string) (string, error) {
+	timeCount := *JWT_SECRET_KEY_EXPIRE_TIME
+	fmt.Println("TimeCount: ", timeCount)
+	fmt.Println("time.Now: ", time.Now())
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"id":   id,
 		"role": role,
-		"iat":  time.Now().Unix(),
-		"eat":  time.Now().Add(time.Minute * time.Duration(minutesCount)).Unix(),
+		"exp":  time.Now().Add(time.Hour * time.Duration(timeCount)).Unix(),
 	})
-	return token.SignedString(privateKey)
+	fmt.Println("Exp: ", time.Now().Add(time.Hour*time.Duration(timeCount)).Unix())
+	return token.SignedString([]byte(*JWT_SECRET_KEY))
 }
 
 func generateNewRefreshToken() (string, error) {
@@ -61,6 +68,7 @@ func generateNewRefreshToken() (string, error) {
 		return "", err
 	}
 
+	hoursCount := *JWT_SECRET_KEY_EXPIRE_HOUR
 	expireTime := fmt.Sprint(time.Now().Add(time.Hour * time.Duration(hoursCount)).Unix())
 	t := hex.EncodeToString(hash.Sum(nil)) + "." + expireTime
 	return t, nil

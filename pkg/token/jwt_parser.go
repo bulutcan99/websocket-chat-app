@@ -1,7 +1,7 @@
 package token
 
 import (
-	"github.com/bulutcan99/go-websocket/model"
+	"fmt"
 	"github.com/bulutcan99/go-websocket/pkg/env"
 	"strings"
 
@@ -10,12 +10,10 @@ import (
 )
 
 var (
-	JWT_KEY = &env.Env.StageStatus
+	JWT_KEY = &env.Env.JwtSecretKey
 )
 
-var jwtKey = []byte(*JWT_KEY)
-
-func ExtractTokenMetaData(c *fiber.Ctx) (*model.TokenMetaData, error) {
+func ExtractTokenMetaData(c *fiber.Ctx) (*TokenMetaData, error) {
 	token, err := verifyToken(c)
 	if err != nil {
 		_ = c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
@@ -39,10 +37,11 @@ func ExtractTokenMetaData(c *fiber.Ctx) (*model.TokenMetaData, error) {
 		return nil, err
 	}
 
-	expires := int64(claims["expires"].(float64))
+	fmt.Println(claims)
+	expires := int64(claims["exp"].(float64))
 	role := claims["role"].(string)
 	id := claims["id"].(string)
-	return &model.TokenMetaData{
+	return &TokenMetaData{
 		ID:      id,
 		Expires: expires,
 		Role:    role,
@@ -75,5 +74,6 @@ func verifyToken(c *fiber.Ctx) (*jwt.Token, error) {
 }
 
 func jwtKeyFunc(token *jwt.Token) (interface{}, error) {
-	return []byte(jwtKey), nil
+	jwtKey := []byte(*JWT_KEY)
+	return jwtKey, nil
 }

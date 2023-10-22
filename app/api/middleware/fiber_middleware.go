@@ -13,9 +13,11 @@ func getCorsConfig() *cors.Config {
 }
 
 func MiddlewareFiber(m *fiber.App) {
-	m.Use(cors.New(*getCorsConfig()))
-	m.Use(logger.New())
-	m.Use(Security)
+	m.Use(
+		cors.New(*getCorsConfig()),
+		logger.New(),
+		Security,
+	)
 }
 
 func Security(c *fiber.Ctx) error {
@@ -27,9 +29,5 @@ func Security(c *fiber.Ctx) error {
 	c.Set("X-DNS-Prefetch-Control", "off")
 	c.Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH")
 	c.Set("Content-Security-Policy", "default-src https:")
-	return c.Next()
-}
-
-func GetNextMiddleWare(c *fiber.Ctx) error {
 	return c.Next()
 }

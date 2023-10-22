@@ -15,10 +15,3 @@ type Success struct {
 	Access  string `json:"access_token,omitempty"`
 	Refresh string `json:"refresh_token,omitempty"`
 }
-
-type TokenMetaData struct {
-	ID      string
-	Email   string
-	Role    string
-	Expires int64
-}

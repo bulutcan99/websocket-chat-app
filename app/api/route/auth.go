@@ -11,5 +11,5 @@ func AuthRoutes(r fiber.Router, au *controller.AuthController) {
 	route := r.Group("/auth")
 	route.Post("/register", au.UserRegister)
 	route.Post("/login", au.UserLogin)
-	route.Post("/logout", middleware.JWTProtected(), au.UserLogOut)
+	route.Post("/logout", middleware.JWTProtection(), au.UserLogOut)
 }

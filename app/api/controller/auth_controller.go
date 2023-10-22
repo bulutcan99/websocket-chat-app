@@ -55,7 +55,6 @@ func (ac *AuthController) UserRegister(c *fiber.Ctx) error {
 			"msg":   "Role must be admin or user",
 		})
 	}
-	fmt.Println("3131")
 	_, errVerify := utility.VerifyRole(signUp.UserRole)
 	if errVerify != nil {
 		return custom_error.ValidationError()
@@ -125,10 +124,21 @@ func (ac *AuthController) UserLogin(c *fiber.Ctx) error {
 		}
 
 		err = ac.redisCache.SetAllUserData(signIn.Email, userId, getUser, tokens)
+		c.Cookie(&fiber.Cookie{
+			Name:     "access_token",
+			Value:    tokens.Access,
+			Expires:  time.Now().Add(time.Hour * 2),
+			Secure:   true,
+			HTTPOnly: true,
+			SameSite: "Lax",
+		})
+
 		return c.JSON(fiber.Map{
 			"error": false,
 			"msg":   "Logged In Successfully!",
 			"tokens": fiber.Map{
+				"userid":  userId,
+				"role":    role,
 				"access":  tokens.Access,
 				"refresh": tokens.Refresh,
 			},
@@ -159,19 +169,37 @@ func (ac *AuthController) UserLogin(c *fiber.Ctx) error {
 			}
 		}
 
+		c.Cookie(&fiber.Cookie{
+			Name:     "access_token",
+			Value:    tokens.Access,
+			Expires:  time.Now().Add(time.Hour * 2),
+			Secure:   true,
+			HTTPOnly: true,
+			SameSite: "Lax",
+		})
 		return c.JSON(fiber.Map{
 			"error": false,
 			"msg":   "Logged In Successfully!",
 			"tokens": fiber.Map{
+				"userid":  userDataWithCache.UserID,
+				"role":    userDataWithCache.UserRole,
 				"access":  tokens.Access,
 				"refresh": tokens.Refresh,
 			},
 		})
 	}
 }
-
 func (ac *AuthController) UserLogOut(c *fiber.Ctx) error {
+	now := time.Now().Unix()
 	tokenMetaData, err := token.ExtractTokenMetaData(c)
+	fmt.Println(tokenMetaData)
+	if err != nil {
+		return c.JSON(fiber.Map{
+			"error": false,
+			"msg":   "Logged Out Successfully!",
+		})
+	}
+
 	err = ac.redisCache.DeleteAllUserData(tokenMetaData.Email, tokenMetaData.ID)
 	if err != nil {
 		return c.JSON(fiber.Map{
@@ -180,14 +208,16 @@ func (ac *AuthController) UserLogOut(c *fiber.Ctx) error {
 		})
 	}
 
-	cookie := fiber.Cookie{
-		Name:     "jwt",
-		Value:    "deleted cookie",
-		Expires:  time.Unix(0, 0),
-		HTTPOnly: true,
+	expires := tokenMetaData.Expires
+	if now > expires {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": true,
+			"msg":   "Unauthorized! Check the expiration time of your token",
+		})
 	}
 
-	c.Cookie(&cookie)
+	c.ClearCookie("access_token")
+
 	return c.JSON(fiber.Map{
 		"error": false,
 		"msg":   "Logged Out Successfully!",
