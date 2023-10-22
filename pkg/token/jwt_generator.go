@@ -50,12 +50,13 @@ func generateNewAccessToken(id string, role string) (string, error) {
 	timeCount := *JWT_SECRET_KEY_EXPIRE_TIME
 	fmt.Println("TimeCount: ", timeCount)
 	fmt.Println("time.Now: ", time.Now())
+	expUnix := time.Now().Add(time.Hour * time.Duration(timeCount)).Unix()
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"id":   id,
 		"role": role,
-		"exp":  time.Now().Add(time.Hour * time.Duration(timeCount)).Unix(),
+		"exp":  expUnix,
 	})
-	fmt.Println("Exp: ", time.Now().Add(time.Hour*time.Duration(timeCount)).Unix())
+
 	return token.SignedString([]byte(*JWT_SECRET_KEY))
 }
 
