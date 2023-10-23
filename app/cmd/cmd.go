@@ -4,7 +4,7 @@ import (
 	"github.com/bulutcan99/go-websocket/app/api/controller"
 	"github.com/bulutcan99/go-websocket/app/api/middleware"
 	"github.com/bulutcan99/go-websocket/app/api/route"
-	platform "github.com/bulutcan99/go-websocket/db/cache"
+	db_cache "github.com/bulutcan99/go-websocket/db/cache"
 	"github.com/bulutcan99/go-websocket/db/repository"
 	"github.com/bulutcan99/go-websocket/pkg/config"
 	config_fiber "github.com/bulutcan99/go-websocket/pkg/config/fiber"
@@ -41,7 +41,7 @@ func Start() {
 	zap.S().Info("App started")
 
 	authRepo := repository.NewAuthUserRepo(Psql)
-	redisCache := platform.NewRedisCache(Redis)
+	redisCache := db_cache.NewRedisCache(Redis)
 	authController := controller.NewAuthController(authRepo, redisCache)
 	cfg := config.ConfigFiber()
 	app := fiber.New(cfg)

@@ -2,7 +2,7 @@ package controller
 
 import (
 	"fmt"
-	"github.com/bulutcan99/go-websocket/db/cache"
+	db_cache "github.com/bulutcan99/go-websocket/db/cache"
 	"github.com/bulutcan99/go-websocket/db/repository"
 	"github.com/bulutcan99/go-websocket/model"
 	custom_error "github.com/bulutcan99/go-websocket/pkg/error"
@@ -24,10 +24,10 @@ type AuthInterface interface {
 
 type AuthController struct {
 	repo       *repository.AuthRepo
-	redisCache *cache.RedisCache
+	redisCache *db_cache.RedisCache
 }
 
-func NewAuthController(authRepo *repository.AuthRepo, redisC *cache.RedisCache) *AuthController {
+func NewAuthController(authRepo *repository.AuthRepo, redisC *db_cache.RedisCache) *AuthController {
 	return &AuthController{
 		repo:       authRepo,
 		redisCache: redisC,

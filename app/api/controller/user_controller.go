@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"github.com/bulutcan99/go-websocket/db/cache"
+	db_cache "github.com/bulutcan99/go-websocket/db/cache"
 	"github.com/bulutcan99/go-websocket/db/repository"
 	custom_error "github.com/bulutcan99/go-websocket/pkg/error"
 	"github.com/bulutcan99/go-websocket/pkg/token"
@@ -19,10 +19,10 @@ type UserInterface interface {
 
 type UserController struct {
 	repo       *repository.UserRepo
-	redisCache *cache.RedisCache
+	redisCache *db_cache.RedisCache
 }
 
-func NewUserController(userRepo *repository.UserRepo, redisC *cache.RedisCache) *UserController {
+func NewUserController(userRepo *repository.UserRepo, redisC *db_cache.RedisCache) *UserController {
 	return &UserController{
 		repo:       userRepo,
 		redisCache: redisC,
@@ -119,4 +119,5 @@ func (uc *UserController) UpdatePasswordHandler(c *fiber.Ctx) error {
 			})
 		}
 	}
+
 }

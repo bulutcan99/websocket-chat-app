@@ -1,4 +1,4 @@
-package cache
+package db_cache
 
 import (
 	"context"
