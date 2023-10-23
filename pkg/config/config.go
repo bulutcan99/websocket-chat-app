@@ -10,7 +10,7 @@ import (
 
 var READ_TIMEOUT_SECONDS_COUNT = &env.Env.ServerReadTimeout
 
-func FiberConfig() fiber.Config {
+func ConfigFiber() fiber.Config {
 	return fiber.Config{
 		ReadTimeout:  time.Second * time.Duration(*READ_TIMEOUT_SECONDS_COUNT),
 		Prefork:      false, // Disable Prefork means that need only 1 instance running

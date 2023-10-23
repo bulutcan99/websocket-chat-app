@@ -7,9 +7,9 @@ import (
 	platform "github.com/bulutcan99/go-websocket/db/cache"
 	"github.com/bulutcan99/go-websocket/db/repository"
 	"github.com/bulutcan99/go-websocket/pkg/config"
-	fiberconfig "github.com/bulutcan99/go-websocket/pkg/config/fiber"
-	psqlconfig "github.com/bulutcan99/go-websocket/pkg/config/psql"
-	redisconfig "github.com/bulutcan99/go-websocket/pkg/config/redis"
+	config_fiber "github.com/bulutcan99/go-websocket/pkg/config/fiber"
+	config_psql "github.com/bulutcan99/go-websocket/pkg/config/psql"
+	config_redis "github.com/bulutcan99/go-websocket/pkg/config/redis"
 	"github.com/bulutcan99/go-websocket/pkg/env"
 	"github.com/bulutcan99/go-websocket/pkg/logger"
 	"github.com/gofiber/fiber/v2"
@@ -17,8 +17,8 @@ import (
 )
 
 var (
-	Psql        *psqlconfig.PostgreSQL
-	Redis       *redisconfig.Redis
+	Psql        *config_psql.PostgreSQL
+	Redis       *config_redis.Redis
 	Logger      *zap.Logger
 	Env         *env.ENV
 	stageStatus = "development"
@@ -27,9 +27,9 @@ var (
 func init() {
 	Env = env.ParseEnv()
 	Logger = logger.InitLogger(Env.LogLevel)
-	Psql = psqlconfig.NewPostgreSQLConnection()
+	Psql = config_psql.NewPostgreSQLConnection()
 	zap.S().Info("Postgres connected")
-	Redis = redisconfig.NewRedisConnection()
+	Redis = config_redis.NewRedisConnection()
 	zap.S().Info("Redis connected")
 
 }
@@ -43,15 +43,14 @@ func Start() {
 	authRepo := repository.NewAuthUserRepo(Psql)
 	redisCache := platform.NewRedisCache(Redis)
 	authController := controller.NewAuthController(authRepo, redisCache)
-	cfg := config.FiberConfig()
+	cfg := config.ConfigFiber()
 	app := fiber.New(cfg)
 	middleware.MiddlewareFiber(app)
-	// app.Static("/static", "./static")
 	route.Index("/", app)
 	route.AuthRoutes(app, authController)
 	if Env.StageStatus == stageStatus {
-		fiberconfig.StartServer(app)
+		config_fiber.StartServer(app)
 	} else {
-		fiberconfig.StartServerWithGracefulShutdown(app)
+		config_fiber.StartServerWithGracefulShutdown(app)
 	}
 }

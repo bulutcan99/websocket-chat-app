@@ -1,4 +1,4 @@
-package fiberconfig
+package config_fiber
 
 import (
 	"github.com/bulutcan99/go-websocket/pkg/config"

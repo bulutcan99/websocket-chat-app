@@ -1,4 +1,4 @@
-package psqlconfig
+package config_psql
 
 import (
 	"context"
