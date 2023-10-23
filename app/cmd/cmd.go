@@ -28,9 +28,7 @@ func init() {
 	Env = env.ParseEnv()
 	Logger = logger.InitLogger(Env.LogLevel)
 	Psql = config_psql.NewPostgreSQLConnection()
-	zap.S().Info("Postgres connected")
 	Redis = config_redis.NewRedisConnection()
-	zap.S().Info("Redis connected")
 
 }
 
@@ -38,8 +36,6 @@ func Start() {
 	defer Logger.Sync()
 	defer Psql.Close()
 	defer Redis.Close()
-	zap.S().Info("App started")
-
 	authRepo := repository.NewAuthUserRepo(Psql)
 	redisCache := db_cache.NewRedisCache(Redis)
 	authController := controller.NewAuthController(authRepo, redisCache)

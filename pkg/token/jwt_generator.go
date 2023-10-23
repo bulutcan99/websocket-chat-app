@@ -29,8 +29,8 @@ type Tokens struct {
 	Refresh string
 }
 
-func GenerateNewTokens(id string, role string) (*Tokens, error) {
-	accessToken, err := generateNewAccessToken(id, role)
+func GenerateNewTokens(id string, role string, email string) (*Tokens, error) {
+	accessToken, err := GenerateNewAccessToken(id, role, email)
 	if err != nil {
 		return nil, err
 	}
@@ -46,15 +46,14 @@ func GenerateNewTokens(id string, role string) (*Tokens, error) {
 	}, nil
 }
 
-func generateNewAccessToken(id string, role string) (string, error) {
+func GenerateNewAccessToken(id string, role string, email string) (string, error) {
 	timeCount := *JWT_SECRET_KEY_EXPIRE_TIME
-	fmt.Println("TimeCount: ", timeCount)
-	fmt.Println("time.Now: ", time.Now())
 	expUnix := time.Now().Add(time.Hour * time.Duration(timeCount)).Unix()
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"id":   id,
-		"role": role,
-		"exp":  expUnix,
+		"id":    id,
+		"role":  role,
+		"email": email,
+		"exp":   expUnix,
 	})
 
 	return token.SignedString([]byte(*JWT_SECRET_KEY))

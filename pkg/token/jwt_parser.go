@@ -1,7 +1,6 @@
 package token
 
 import (
-	"fmt"
 	"github.com/bulutcan99/go-websocket/pkg/env"
 	"strings"
 
@@ -37,18 +36,19 @@ func ExtractTokenMetaData(c *fiber.Ctx) (*TokenMetaData, error) {
 		return nil, err
 	}
 
-	fmt.Println(claims)
 	expires := int64(claims["exp"].(float64))
 	role := claims["role"].(string)
 	id := claims["id"].(string)
+	email := claims["email"].(string)
 	return &TokenMetaData{
 		ID:      id,
 		Expires: expires,
 		Role:    role,
+		Email:   email,
 	}, nil
 }
 
-func extractToken(c *fiber.Ctx) string {
+func ExtractToken(c *fiber.Ctx) string {
 	authorizationHeader := c.Get("Authorization")
 	if authorizationHeader == "" {
 		return ""
@@ -63,7 +63,7 @@ func extractToken(c *fiber.Ctx) string {
 }
 
 func verifyToken(c *fiber.Ctx) (*jwt.Token, error) {
-	tokenString := extractToken(c)
+	tokenString := ExtractToken(c)
 
 	token, err := jwt.Parse(tokenString, jwtKeyFunc)
 	if err != nil {

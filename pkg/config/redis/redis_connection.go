@@ -47,7 +47,7 @@ func NewRedisConnection() *Redis {
 		client = redisClient
 	})
 
-	zap.S().Infof("Connected to Redis successfully %s", redisCon)
+	zap.S().Infof("Connected to Redis successfully.")
 	return &Redis{
 		Client:  client,
 		Context: ctx,

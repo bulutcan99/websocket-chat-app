@@ -115,7 +115,7 @@ func (ac *AuthController) UserLogin(c *fiber.Ctx) error {
 
 		role := getUser.UserRole
 		userId := getUser.ID.String()
-		tokens, err := token.GenerateNewTokens(getUser.ID.String(), role)
+		tokens, err := token.GenerateNewTokens(getUser.ID.String(), role, getUser.Email)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": true,
@@ -124,27 +124,20 @@ func (ac *AuthController) UserLogin(c *fiber.Ctx) error {
 		}
 
 		err = ac.redisCache.SetAllUserData(signIn.Email, userId, getUser, tokens)
-		c.Cookie(&fiber.Cookie{
-			Name:     "access_token",
-			Value:    tokens.Access,
-			Expires:  time.Now().Add(time.Hour * 2),
-			Secure:   true,
-			HTTPOnly: true,
-			SameSite: "Lax",
-		})
-
 		return c.JSON(fiber.Map{
 			"error": false,
 			"msg":   "Logged In Successfully!",
 			"tokens": fiber.Map{
 				"userid":  userId,
 				"role":    role,
+				"email":   signIn.Email,
 				"access":  tokens.Access,
 				"refresh": tokens.Refresh,
 			},
 		})
 	} else {
-		zap.S().Info("User data already in redis cache!")
+
+		zap.S().Infof("User data already in redis cache!")
 		isComparedUserPass := utility.ComparePasswords(userDataWithCache.UserPasswordHash, signIn.Password)
 		if !isComparedUserPass {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
@@ -155,7 +148,7 @@ func (ac *AuthController) UserLogin(c *fiber.Ctx) error {
 
 		tokens, err := ac.redisCache.GetUserTokenData(userDataWithCache.UserID)
 		if err != nil && err == redis.Nil {
-			tokens, err = token.GenerateNewTokens(userDataWithCache.UserID, userDataWithCache.UserRole)
+			tokens, err = token.GenerateNewTokens(userDataWithCache.UserID, userDataWithCache.UserRole, userDataWithCache.UserEmail)
 			if err != nil {
 				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 					"error": true,
@@ -164,14 +157,6 @@ func (ac *AuthController) UserLogin(c *fiber.Ctx) error {
 			}
 		}
 
-		c.Cookie(&fiber.Cookie{
-			Name:     "access_token",
-			Value:    tokens.Access,
-			Expires:  time.Now().Add(time.Hour * 12),
-			Secure:   true,
-			HTTPOnly: true,
-			SameSite: "Lax",
-		})
 		return c.JSON(fiber.Map{
 			"error": false,
 			"msg":   "Logged In Successfully!",
@@ -184,22 +169,38 @@ func (ac *AuthController) UserLogin(c *fiber.Ctx) error {
 		})
 	}
 }
+
 func (ac *AuthController) UserLogOut(c *fiber.Ctx) error {
 	now := time.Now().Unix()
+
 	tokenMetaData, err := token.ExtractTokenMetaData(c)
-	fmt.Println(tokenMetaData)
 	if err != nil {
 		return c.JSON(fiber.Map{
-			"error": false,
-			"msg":   "Logged Out Successfully!",
+			"error": true,
+			"msg":   "There is an error while trying to extract token metadata",
+		})
+	}
+
+	userTokenCache, err := ac.redisCache.GetUserTokenData(tokenMetaData.ID)
+	if err != nil {
+		return c.JSON(fiber.Map{
+			"error": true,
+			"msg":   "There is an error while trying to get user token data",
+		})
+	}
+
+	if userTokenCache.Access != token.ExtractToken(c) {
+		return c.JSON(fiber.Map{
+			"error": true,
+			"msg":   "Access token is not valid!",
 		})
 	}
 
 	err = ac.redisCache.DeleteAllUserData(tokenMetaData.Email, tokenMetaData.ID)
 	if err != nil {
 		return c.JSON(fiber.Map{
-			"error": false,
-			"msg":   "Logged Out Successfully!",
+			"error": true,
+			"msg":   "There is an error while trying to delete user data!",
 		})
 	}
 
@@ -207,11 +208,9 @@ func (ac *AuthController) UserLogOut(c *fiber.Ctx) error {
 	if now > expires {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": true,
-			"msg":   "Unauthorized! Check the expiration time of your token",
+			"msg":   "Unauthorized! Check the expiration time of your token!",
 		})
 	}
-
-	c.ClearCookie("access_token")
 
 	return c.JSON(fiber.Map{
 		"error": false,

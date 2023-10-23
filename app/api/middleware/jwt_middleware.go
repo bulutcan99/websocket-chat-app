@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"fmt"
 	"github.com/bulutcan99/go-websocket/pkg/env"
 	jwtMiddleware "github.com/gofiber/contrib/jwt"
 	"github.com/gofiber/fiber/v2"
@@ -31,7 +30,6 @@ func jwtError(c *fiber.Ctx, err error) error {
 		})
 	}
 
-	fmt.Println("ERROR: ", err)
 	return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 		"error": true,
 		"msg":   err.Error(),

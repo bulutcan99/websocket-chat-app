@@ -34,7 +34,7 @@ func StartServerWithGracefulShutdown(a *fiber.App) {
 
 func StartServer(a *fiber.App) {
 	fiberConnURL, _ := config.ConnectionURLBuilder("fiber")
-	zap.S().Infof("Connected to Fiber successfully %s", fiberConnURL)
+	zap.S().Infof("Connected to Fiber successfully.")
 	if err := a.Listen(fiberConnURL); err != nil {
 		zap.S().Errorf("Oops... Server is not running! Reason: %v", err)
 	}

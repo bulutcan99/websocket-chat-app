@@ -46,7 +46,7 @@ func NewPostgreSQLConnection() *PostgreSQL {
 		client = db
 	})
 
-	zap.S().Infof("Connected to Postgres successfully %s", postgresConnURL)
+	zap.S().Infof("Connected to Postgres successfully.")
 	return &PostgreSQL{
 		Client:  client,
 		Context: ctx,

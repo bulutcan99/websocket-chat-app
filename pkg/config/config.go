@@ -17,7 +17,7 @@ func ConfigFiber() fiber.Config {
 		ServerHeader: "iMon",
 		AppName:      "Go-Chat",
 		Immutable:    true,
-		Views:        getHandler(),
+		// Views:        getHandler(),
 	}
 }
 

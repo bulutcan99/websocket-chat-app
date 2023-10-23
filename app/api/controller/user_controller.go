@@ -55,8 +55,8 @@ func (uc *UserController) GetUserSelfHandler(c *fiber.Ctx) error {
 			"user":  user,
 		})
 	} else {
-		zap.S().Debug("User data already in redis cache!")
 
+		zap.S().Errorf("User data already in redis cache!")
 		return c.JSON(fiber.Map{
 			"error": false,
 			"user":  userDataWithCache,
@@ -110,7 +110,8 @@ func (uc *UserController) UpdatePasswordHandler(c *fiber.Ctx) error {
 			"New Password": newPass,
 		})
 	} else {
-		zap.S().Debug("User data already in redis cache!")
+
+		zap.S().Errorf("User data already in redis cache!")
 		errSetRedis := uc.redisCache.SetUserData(userDataWithCache.UserID, userDataWithCache)
 		if errSetRedis != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -119,5 +120,5 @@ func (uc *UserController) UpdatePasswordHandler(c *fiber.Ctx) error {
 			})
 		}
 	}
-
+	return nil
 }
