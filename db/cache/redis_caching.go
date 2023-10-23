@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/bulutcan99/go-websocket/model"
-	"github.com/bulutcan99/go-websocket/pkg/config"
+	redis2 "github.com/bulutcan99/go-websocket/pkg/config/redis"
 	"github.com/bulutcan99/go-websocket/pkg/token"
 	"github.com/redis/go-redis/v9"
 	"strconv"
@@ -35,7 +35,7 @@ type RedisCache struct {
 	context context.Context
 }
 
-func NewRedisCache(redis *config.Redis) *RedisCache {
+func NewRedisCache(redis *redis2.Redis) *RedisCache {
 	return &RedisCache{
 		client:  redis.Client,
 		context: redis.Context,
@@ -175,7 +175,7 @@ func (rc *RedisCache) DeleteAllUserData(email string, id string) error {
 		return err
 	}
 
-	err = rc.deleteUserToken(id)
+	err = rc.DeleteUserToken(id)
 	if err != nil {
 		return err
 	}
@@ -203,7 +203,7 @@ func (rc *RedisCache) deleteUserData(id string) error {
 	return nil
 }
 
-func (rc *RedisCache) deleteUserToken(id string) error {
+func (rc *RedisCache) DeleteUserToken(id string) error {
 	cacheUserIdKey := fmt.Sprintf("user:id:%s:token", id)
 	err := rc.client.Del(rc.context, cacheUserIdKey).Err()
 	if err != nil {

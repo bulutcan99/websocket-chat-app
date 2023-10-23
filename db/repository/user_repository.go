@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 	"github.com/bulutcan99/go-websocket/model"
-	"github.com/bulutcan99/go-websocket/pkg/config"
+	"github.com/bulutcan99/go-websocket/pkg/config/psql"
 	custom_error "github.com/bulutcan99/go-websocket/pkg/error"
 	"github.com/bulutcan99/go-websocket/pkg/utility"
 	"github.com/google/uuid"
@@ -21,7 +21,7 @@ type UserRepo struct {
 	context context.Context
 }
 
-func NewUserRepo(psql *config.PostgreSQL) *UserRepo {
+func NewUserRepo(psql *psql.PostgreSQL) *UserRepo {
 	return &UserRepo{
 		db:      psql.DB,
 		context: psql.Context,

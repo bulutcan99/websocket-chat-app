@@ -1,7 +1,8 @@
-package config
+package fiberconfig
 
 import (
-	"fmt"
+	"github.com/bulutcan99/go-websocket/pkg/config"
+	"go.uber.org/zap"
 	"log"
 	"os"
 	"os/signal"
@@ -23,7 +24,7 @@ func StartServerWithGracefulShutdown(a *fiber.App) {
 		close(idleConnsClosed)
 	}()
 
-	fiberConnURL, _ := ConnectionURLBuilder("fiber")
+	fiberConnURL, _ := config.ConnectionURLBuilder("fiber")
 	if err := a.Listen(fiberConnURL); err != nil {
 		log.Printf("Oops... Server is not running! Reason: %v", err)
 	}
@@ -32,9 +33,9 @@ func StartServerWithGracefulShutdown(a *fiber.App) {
 }
 
 func StartServer(a *fiber.App) {
-	fiberConnURL, _ := ConnectionURLBuilder("fiber")
-	fmt.Println("Fiber connected")
+	fiberConnURL, _ := config.ConnectionURLBuilder("fiber")
+	zap.S().Infof("Connected to Fiber successfully %s", fiberConnURL)
 	if err := a.Listen(fiberConnURL); err != nil {
-		log.Printf("Oops... Server is not running! Reason: %v", err)
+		zap.S().Errorf("Oops... Server is not running! Reason: %v", err)
 	}
 }
