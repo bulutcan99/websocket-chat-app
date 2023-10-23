@@ -6,7 +6,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// AuthRoutes Base Route = /v1/auth
+// AuthRoutes Base Route = /auth
 func AuthRoutes(r fiber.Router, au *controller.AuthController) {
 	route := r.Group("/auth")
 	route.Post("/register", au.UserRegister)

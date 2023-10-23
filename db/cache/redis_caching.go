@@ -63,7 +63,7 @@ func (rc *RedisCache) GetUserDataByEmail(email string) (*UserCache, error) {
 		return nil, err
 	}
 
-	return rc.getUserData(*id)
+	return rc.GetUserDataById(*id)
 }
 
 func (rc *RedisCache) getUserId(email string) (*string, error) {
@@ -76,7 +76,7 @@ func (rc *RedisCache) getUserId(email string) (*string, error) {
 	return &userID, nil
 }
 
-func (rc *RedisCache) getUserData(id string) (*UserCache, error) {
+func (rc *RedisCache) GetUserDataById(id string) (*UserCache, error) {
 	cacheUserIdKey := fmt.Sprintf("user:id:%s:data", id)
 	userData, err := rc.client.Get(rc.context, cacheUserIdKey).Result()
 	if err != nil {
@@ -97,8 +97,8 @@ func (rc *RedisCache) SetAllUserData(email string, id string, user *model.User, 
 		return err
 	}
 
-	cacheData := rc.dbUserToCacheUser(user)
-	err = rc.setUserData(id, cacheData)
+	cacheData := rc.DbUserToCacheUser(user)
+	err = rc.SetUserData(id, cacheData)
 	if err != nil {
 		return err
 	}
@@ -136,7 +136,7 @@ func (rc *RedisCache) setUserId(email string, id string) error {
 	return nil
 }
 
-func (rc *RedisCache) setUserData(id string, user *UserCache) error {
+func (rc *RedisCache) SetUserData(id string, user *UserCache) error {
 	cacheUserIdKey := fmt.Sprintf("user:id:%s:data", id)
 	userData, err := json.Marshal(user)
 	if err != nil {
@@ -151,7 +151,7 @@ func (rc *RedisCache) setUserData(id string, user *UserCache) error {
 	return nil
 }
 
-func (rc *RedisCache) dbUserToCacheUser(user *model.User) *UserCache {
+func (rc *RedisCache) DbUserToCacheUser(user *model.User) *UserCache {
 	return &UserCache{
 		UserID:           user.ID.String(),
 		UserEmail:        user.Email,

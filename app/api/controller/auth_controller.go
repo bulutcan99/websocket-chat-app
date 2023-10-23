@@ -162,17 +162,12 @@ func (ac *AuthController) UserLogin(c *fiber.Ctx) error {
 					"msg":   "There is a problem while trying to generate new tokens",
 				})
 			}
-
-			err = ac.redisCache.SetUserToken(userDataWithCache.UserID, tokens)
-			if err != nil {
-				zap.S().Error("Error while trying to set user token: ", err)
-			}
 		}
 
 		c.Cookie(&fiber.Cookie{
 			Name:     "access_token",
 			Value:    tokens.Access,
-			Expires:  time.Now().Add(time.Hour * 2),
+			Expires:  time.Now().Add(time.Hour * 12),
 			Secure:   true,
 			HTTPOnly: true,
 			SameSite: "Lax",
