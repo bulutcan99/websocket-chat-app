@@ -171,28 +171,19 @@ func (ac *AuthController) UserLogin(c *fiber.Ctx) error {
 }
 
 func (ac *AuthController) UserLogOut(c *fiber.Ctx) error {
-	now := time.Now().Unix()
-
-	tokenMetaData, err := token.ExtractTokenMetaData(c)
+	tokenMetaData := &token.TokenMetaData{}
+	err, tokenMetaData := ac.TokenProtection(c)
 	if err != nil {
 		return c.JSON(fiber.Map{
 			"error": true,
-			"msg":   "There is an error while trying to extract token metadata",
+			"msg":   "User not authorized!",
 		})
 	}
 
-	userTokenCache, err := ac.redisCache.GetUserTokenData(tokenMetaData.ID)
-	if err != nil {
+	if tokenMetaData == nil {
 		return c.JSON(fiber.Map{
 			"error": true,
-			"msg":   "There is an error while trying to get user token data",
-		})
-	}
-
-	if userTokenCache.Access != token.ExtractToken(c) {
-		return c.JSON(fiber.Map{
-			"error": true,
-			"msg":   "Access token is not valid!",
+			"msg":   "Token metadata is nil!",
 		})
 	}
 
@@ -204,16 +195,48 @@ func (ac *AuthController) UserLogOut(c *fiber.Ctx) error {
 		})
 	}
 
+	return c.JSON(fiber.Map{
+		"error": false,
+		"msg":   "Logged Out Successfully!",
+	})
+}
+
+func (ac *AuthController) TokenProtection(c *fiber.Ctx) (error, *token.TokenMetaData) {
+	now := time.Now().Unix()
+
+	tokenMetaData, err := token.ExtractTokenMetaData(c)
+	if err != nil {
+		return c.JSON(fiber.Map{
+			"error": true,
+			"msg":   "There is an error while trying to extract token metadata",
+		}), nil
+	}
+
 	expires := tokenMetaData.Expires
 	if now > expires {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": true,
 			"msg":   "Unauthorized! Check the expiration time of your token!",
-		})
+		}), nil
+	}
+
+	userTokenCache, err := ac.redisCache.GetUserTokenData(tokenMetaData.ID)
+	if err != nil {
+		return c.JSON(fiber.Map{
+			"error": true,
+			"msg":   "There is an error while trying to get user token data",
+		}), nil
+	}
+
+	if userTokenCache.Access != token.ExtractToken(c) {
+		return c.JSON(fiber.Map{
+			"error": true,
+			"msg":   "Access token is not valid!",
+		}), nil
 	}
 
 	return c.JSON(fiber.Map{
 		"error": false,
-		"msg":   "Logged Out Successfully!",
-	})
+		"msg":   "User is authorized!",
+	}), tokenMetaData
 }

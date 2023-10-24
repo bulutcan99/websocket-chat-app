@@ -14,6 +14,7 @@ type AuthInterface interface {
 	GetUserSignByEmail(email string) (*model.User, error)
 	GetUserById(id uuid.UUID) (model.User, error)
 	GetUserRoleById(id uuid.UUID) (string, error)
+	GetUserEmailById(id uuid.UUID) (string, error)
 }
 
 type AuthRepo struct {

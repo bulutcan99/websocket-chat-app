@@ -5,14 +5,13 @@ import (
 	"github.com/bulutcan99/go-websocket/model"
 	config_psql "github.com/bulutcan99/go-websocket/pkg/config/psql"
 	custom_error "github.com/bulutcan99/go-websocket/pkg/error"
-	"github.com/bulutcan99/go-websocket/pkg/utility"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 )
 
 type UserInterface interface {
 	GetUserSelf(id uuid.UUID) (*model.User, error)
-	GetShownedUserByEmail(email string) (*model.UserShown, error)
+	GetShowAnotherUserByEmail(email string) (*model.UserShown, error)
 	UpdatePassword(id uuid.UUID, oldPassword string, newPassword string) error
 }
 
@@ -39,7 +38,7 @@ func (r *UserRepo) GetUserSelf(id uuid.UUID) (*model.User, error) {
 	return &user, nil
 }
 
-func (r *UserRepo) GetShownedUserByEmail(email string) (*model.UserShown, error) {
+func (r *UserRepo) GetShowAnotherUserByEmail(email string) (*model.UserShown, error) {
 	var user model.User
 	query := `SELECT * FROM users WHERE email = $1`
 	err := r.db.QueryRowContext(r.context, query, email).Scan(&user.ID, &user.CreatedAt, &user.UpdatedAt, &user.Email, &user.NameSurname, &user.PasswordHash, &user.Status, &user.UserRole)
@@ -56,7 +55,7 @@ func (r *UserRepo) GetShownedUserByEmail(email string) (*model.UserShown, error)
 	}, nil
 }
 
-func (r *UserRepo) UpdatePassword(id uuid.UUID, newPassword string) error {
+func (r *UserRepo) UpdatePassword(id uuid.UUID, newPasswordHash string) error {
 	var user model.User
 	query := `SELECT * FROM users WHERE id = $1`
 	err := r.db.QueryRowContext(r.context, query, id).Scan(&user.PasswordHash)
@@ -65,11 +64,10 @@ func (r *UserRepo) UpdatePassword(id uuid.UUID, newPassword string) error {
 	}
 
 	updateQuery := `UPDATE users SET password_hash = $1 WHERE id = $2`
-	hashedPassword := utility.GeneratePassword(newPassword)
 	_, updateError := r.db.ExecContext(
 		r.context,
 		updateQuery,
-		hashedPassword)
+		newPasswordHash)
 
 	if updateError != nil {
 		return err

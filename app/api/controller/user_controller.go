@@ -4,7 +4,7 @@ import (
 	db_cache "github.com/bulutcan99/go-websocket/db/cache"
 	"github.com/bulutcan99/go-websocket/db/repository"
 	custom_error "github.com/bulutcan99/go-websocket/pkg/error"
-	"github.com/bulutcan99/go-websocket/pkg/token"
+	"github.com/bulutcan99/go-websocket/pkg/utility"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
@@ -20,6 +20,7 @@ type UserInterface interface {
 type UserController struct {
 	repo       *repository.UserRepo
 	redisCache *db_cache.RedisCache
+	ac         *AuthController
 }
 
 func NewUserController(userRepo *repository.UserRepo, redisC *db_cache.RedisCache) *UserController {
@@ -29,8 +30,15 @@ func NewUserController(userRepo *repository.UserRepo, redisC *db_cache.RedisCach
 	}
 }
 
-func (uc *UserController) GetUserSelfHandler(c *fiber.Ctx) error {
-	tokenMetaData, err := token.ExtractTokenMetaData(c)
+func (uc *UserController) GetUserSelfInfo(c *fiber.Ctx) error {
+	err, tokenMetaData := uc.ac.TokenProtection(c)
+	if err != nil {
+		return c.JSON(fiber.Map{
+			"error": true,
+			"msg":   "User not authorized!",
+		})
+	}
+
 	userDataWithCache, err := uc.redisCache.GetUserDataById(tokenMetaData.ID)
 	if err == redis.Nil {
 		id, err := uuid.Parse(tokenMetaData.ID)
@@ -39,14 +47,6 @@ func (uc *UserController) GetUserSelfHandler(c *fiber.Ctx) error {
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 				"error": true,
 				"msg":   "User not found",
-			})
-		}
-
-		errSetRedis := uc.redisCache.SetUserData(userDataWithCache.UserID, userDataWithCache)
-		if errSetRedis != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": true,
-				"msg":   "There is an error while trying to set redis user data",
 			})
 		}
 
@@ -64,10 +64,18 @@ func (uc *UserController) GetUserSelfHandler(c *fiber.Ctx) error {
 	}
 }
 
-func (uc *UserController) GetAnotherUserHandler(c *fiber.Ctx) error {
+func (uc *UserController) GetAnotherUserInfo(c *fiber.Ctx) error {
+	err, _ := uc.ac.TokenProtection(c)
+	if err != nil {
+		return c.JSON(fiber.Map{
+			"error": true,
+			"msg":   "User not authorized!",
+		})
+	}
+
 	email := c.Params("email")
 
-	user, err := uc.repo.GetShownedUserByEmail(email)
+	user, err := uc.repo.GetShowAnotherUserByEmail(email)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": true,
@@ -82,43 +90,46 @@ func (uc *UserController) GetAnotherUserHandler(c *fiber.Ctx) error {
 }
 
 func (uc *UserController) UpdatePasswordHandler(c *fiber.Ctx) error {
-	tokenMetaData, err := token.ExtractTokenMetaData(c)
-	var newPass *string
+	err, tokenMetaData := uc.ac.TokenProtection(c)
+	if err != nil {
+		return c.JSON(fiber.Map{
+			"error": true,
+			"msg":   "User not authorized!",
+		})
+	}
+
+	var newPass string
 	if err := c.BodyParser(newPass); err != nil {
 		return custom_error.ParseError()
 	}
-	userDataWithCache, err := uc.redisCache.GetUserDataById(tokenMetaData.ID)
-	if err == redis.Nil {
-		id, err := uuid.Parse(tokenMetaData.ID)
-		if err != nil {
-			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-				"error": true,
-				"msg":   "There is an error while trying to parse user id",
-			})
-		}
 
-		updateErr := uc.repo.UpdatePassword(id, *newPass)
-		if updateErr != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": true,
-				"msg":   "There is an error while trying to update password",
-			})
-		}
-
-		return c.JSON(fiber.Map{
-			"error":        false,
-			"New Password": newPass,
+	id, errUuid := uuid.Parse(tokenMetaData.ID)
+	if errUuid != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": true,
+			"msg":   "There is an error while trying to parse uuid",
 		})
-	} else {
-
-		zap.S().Errorf("User data already in redis cache!")
-		errSetRedis := uc.redisCache.SetUserData(userDataWithCache.UserID, userDataWithCache)
-		if errSetRedis != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": true,
-				"msg":   "There is an error while trying to set redis user data",
-			})
-		}
 	}
-	return nil
+
+	newPassHash := utility.GeneratePassword(newPass)
+	updateErr := uc.repo.UpdatePassword(id, newPassHash)
+	if updateErr != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": true,
+			"msg":   "There is an error while trying to update password",
+		})
+	}
+
+	errUpdateRedis := uc.redisCache.UpdateUserPasswordHash(tokenMetaData.ID, newPassHash)
+	if errUpdateRedis != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": true,
+			"msg":   "There is an error while trying to update redis cache",
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"error":        false,
+		"New Password": newPass,
+	})
 }

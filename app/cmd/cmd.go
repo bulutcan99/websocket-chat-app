@@ -37,13 +37,16 @@ func Start() {
 	defer Psql.Close()
 	defer Redis.Close()
 	authRepo := repository.NewAuthUserRepo(Psql)
+	userRepo := repository.NewUserRepo(Psql)
 	redisCache := db_cache.NewRedisCache(Redis)
 	authController := controller.NewAuthController(authRepo, redisCache)
+	userController := controller.NewUserController(userRepo, redisCache)
 	cfg := config.ConfigFiber()
 	app := fiber.New(cfg)
 	middleware.MiddlewareFiber(app)
 	route.Index("/", app)
 	route.AuthRoutes(app, authController)
+	route.UserRoutes(app, userController)
 	if Env.StageStatus == stageStatus {
 		config_fiber.StartServer(app)
 	} else {

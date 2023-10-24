@@ -212,3 +212,29 @@ func (rc *RedisCache) DeleteUserToken(id string) error {
 
 	return nil
 }
+
+func (rc *RedisCache) UpdateUserPasswordHash(id string, newPassHash string) error {
+	cacheUserIdKey := fmt.Sprintf("user:id:%s:data", id)
+	userData, err := rc.client.Get(rc.context, cacheUserIdKey).Result()
+	if err != nil {
+		return err
+	}
+
+	var user UserCache
+	if err := json.Unmarshal([]byte(userData), &user); err != nil {
+		return err
+	}
+
+	user.UserPasswordHash = newPassHash
+	updatedUserData, err := json.Marshal(user)
+	if err != nil {
+		return err
+	}
+
+	err = rc.client.Set(rc.context, cacheUserIdKey, updatedUserData, 24*time.Hour).Err()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
