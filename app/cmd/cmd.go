@@ -40,7 +40,7 @@ func Start() {
 	userRepo := repository.NewUserRepo(Psql)
 	redisCache := db_cache.NewRedisCache(Redis)
 	authController := controller.NewAuthController(authRepo, redisCache)
-	userController := controller.NewUserController(userRepo, redisCache)
+	userController := controller.NewUserController(userRepo, redisCache, authController)
 	cfg := config.ConfigFiber()
 	app := fiber.New(cfg)
 	middleware.MiddlewareFiber(app)

@@ -23,10 +23,11 @@ type UserController struct {
 	ac         *AuthController
 }
 
-func NewUserController(userRepo *repository.UserRepo, redisC *db_cache.RedisCache) *UserController {
+func NewUserController(userRepo *repository.UserRepo, redisC *db_cache.RedisCache, authCont *AuthController) *UserController {
 	return &UserController{
 		repo:       userRepo,
 		redisCache: redisC,
+		ac:         authCont,
 	}
 }
 
@@ -56,7 +57,7 @@ func (uc *UserController) GetUserSelfInfo(c *fiber.Ctx) error {
 		})
 	} else {
 
-		zap.S().Errorf("User data already in redis cache!")
+		zap.S().Infof("User data already in redis cache!")
 		return c.JSON(fiber.Map{
 			"error": false,
 			"user":  userDataWithCache,
