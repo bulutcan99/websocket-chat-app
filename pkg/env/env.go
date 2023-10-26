@@ -30,6 +30,7 @@ type ENV struct {
 	RedisPort                     int    `env:"REDIS_PORT,required"`
 	RedisPassword                 string `env:"REDIS_PASSWORD,required"`
 	RedisDBNumber                 int    `env:"REDIS_DB_NUMBER,required"`
+	RabbitMQUrl                   string `env:"RABBITMQ_URL,required"`
 	LogLevel                      string `env:"LOG_LEVEL,required"`
 }
 

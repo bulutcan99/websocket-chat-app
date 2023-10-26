@@ -27,7 +27,7 @@ type PostgreSQL struct {
 
 func NewPostgreSQLConnection() *PostgreSQL {
 	ctx := context.Background()
-	postgresConnURL, err := config.ConnectionURLBuilder("postgres")
+	postgresConnURL, err := config_builder.ConnectionURLBuilder("postgres")
 	if err != nil {
 		panic(err)
 	}

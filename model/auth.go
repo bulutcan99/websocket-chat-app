@@ -11,3 +11,7 @@ type SignIn struct {
 	Email    string `json:"email" validate:"required,nonzero,emailvalidator"`
 	Password string `json:"password" validate:"required,passvalidator,lte=30"`
 }
+
+type PasswordUpdate struct {
+	NewPassword string `json:"new_password" validate:"required,passvalidator,lte=30"`
+}

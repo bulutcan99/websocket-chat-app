@@ -1,4 +1,4 @@
-package config
+package config_builder
 
 import (
 	"github.com/bulutcan99/go-websocket/pkg/env"

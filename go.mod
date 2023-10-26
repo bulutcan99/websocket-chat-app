@@ -15,6 +15,7 @@ require (
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/joho/godotenv v1.5.1
 	github.com/redis/go-redis/v9 v9.2.1
+	github.com/streadway/amqp v1.1.0
 	go.uber.org/zap v1.26.0
 	golang.org/x/crypto v0.13.0
 )

@@ -3,6 +3,7 @@ package controller
 import (
 	db_cache "github.com/bulutcan99/go-websocket/db/cache"
 	"github.com/bulutcan99/go-websocket/db/repository"
+	"github.com/bulutcan99/go-websocket/model"
 	custom_error "github.com/bulutcan99/go-websocket/pkg/error"
 	"github.com/bulutcan99/go-websocket/pkg/utility"
 	"github.com/gofiber/fiber/v2"
@@ -99,7 +100,7 @@ func (uc *UserController) UpdatePasswordHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	var newPass string
+	newPass := &model.PasswordUpdate{}
 	if err := c.BodyParser(newPass); err != nil {
 		return custom_error.ParseError()
 	}
@@ -112,7 +113,7 @@ func (uc *UserController) UpdatePasswordHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	newPassHash := utility.GeneratePassword(newPass)
+	newPassHash := utility.GeneratePassword(newPass.NewPassword)
 	updateErr := uc.repo.UpdatePassword(id, newPassHash)
 	if updateErr != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{

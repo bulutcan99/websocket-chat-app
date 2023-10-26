@@ -2,7 +2,7 @@ package config_redis
 
 import (
 	"context"
-	"github.com/bulutcan99/go-websocket/pkg/config"
+	config_builder "github.com/bulutcan99/go-websocket/pkg/config"
 	"github.com/bulutcan99/go-websocket/pkg/env"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
@@ -18,13 +18,13 @@ var (
 
 type Redis struct {
 	Client  *redis.Client
-	Context context.Context // Bağlam ekleniyor
+	Context context.Context
 }
 
 func NewRedisConnection() *Redis {
 	ctx := context.Background()
 
-	redisCon, err := config.ConnectionURLBuilder("redis")
+	redisCon, err := config_builder.ConnectionURLBuilder("redis")
 	if err != nil {
 		panic(err)
 	}
