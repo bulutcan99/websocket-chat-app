@@ -9,7 +9,6 @@ import (
 	config_builder "github.com/bulutcan99/go-websocket/pkg/config"
 	config_fiber "github.com/bulutcan99/go-websocket/pkg/config/fiber"
 	config_psql "github.com/bulutcan99/go-websocket/pkg/config/psql"
-	config_rabbitMq "github.com/bulutcan99/go-websocket/pkg/config/rabbitMQ"
 	config_redis "github.com/bulutcan99/go-websocket/pkg/config/redis"
 	"github.com/bulutcan99/go-websocket/pkg/env"
 	"github.com/bulutcan99/go-websocket/pkg/logger"
@@ -20,7 +19,6 @@ import (
 var (
 	Psql        *config_psql.PostgreSQL
 	Redis       *config_redis.Redis
-	RabbitMQ    *config_rabbitMq.RabbitMQ
 	Logger      *zap.Logger
 	Env         *env.ENV
 	stageStatus = "development"
@@ -31,14 +29,12 @@ func init() {
 	Logger = logger.InitLogger(Env.LogLevel)
 	Psql = config_psql.NewPostgreSQLConnection()
 	Redis = config_redis.NewRedisConnection()
-	RabbitMQ = config_rabbitMq.NewRabbitMq()
 }
 
 func Start() {
 	defer Logger.Sync()
 	defer Psql.Close()
 	defer Redis.Close()
-	defer RabbitMQ.Close()
 	authRepo := repository.NewAuthUserRepo(Psql)
 	userRepo := repository.NewUserRepo(Psql)
 	redisCache := db_cache.NewRedisCache(Redis)
