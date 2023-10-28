@@ -33,8 +33,8 @@ type ENV struct {
 	KafkaHost                     string `env:"KAFKA_HOST,required"`
 	KafkaPort                     int    `env:"KAFKA_PORT,required"`
 	KafkaMessageTopic             string `env:"KAFKA_MESSAGE_TOPIC,required"`
-	// KafkaNotificationTopic        string `env:"KAFKA_NOTIFICATION_TOPIC,required"`
-	LogLevel string `env:"LOG_LEVEL,required"`
+	KafkaNotificationTopic        string `env:"KAFKA_NOTIFICATION_TOPIC,required"`
+	LogLevel                      string `env:"LOG_LEVEL,required"`
 }
 
 var doOnce sync.Once
