@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
@@ -17,6 +18,7 @@ func MiddlewareFiber(m *fiber.App) {
 		cors.New(*getCorsConfig()),
 		logger.New(),
 		Security,
+		WSMiddleware,
 	)
 }
 
@@ -30,4 +32,13 @@ func Security(c *fiber.Ctx) error {
 	c.Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH")
 	c.Set("Content-Security-Policy", "default-src https:")
 	return c.Next()
+}
+
+func WSMiddleware(c *fiber.Ctx) error {
+	if websocket.IsWebSocketUpgrade(c) {
+		c.Locals("allowed", true)
+		return c.Next()
+	}
+
+	return fiber.ErrUpgradeRequired
 }

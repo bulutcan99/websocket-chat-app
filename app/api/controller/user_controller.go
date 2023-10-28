@@ -1,9 +1,9 @@
 package controller
 
 import (
-	db_cache "github.com/bulutcan99/go-websocket/db/cache"
-	"github.com/bulutcan99/go-websocket/db/repository"
-	"github.com/bulutcan99/go-websocket/model"
+	"github.com/bulutcan99/go-websocket/internal/db/cache"
+	"github.com/bulutcan99/go-websocket/internal/db/repository"
+	"github.com/bulutcan99/go-websocket/internal/model"
 	custom_error "github.com/bulutcan99/go-websocket/pkg/error"
 	"github.com/bulutcan99/go-websocket/pkg/utility"
 	"github.com/gofiber/fiber/v2"
@@ -58,7 +58,7 @@ func (uc *UserController) GetUserSelfInfo(c *fiber.Ctx) error {
 		})
 	} else {
 
-		zap.S().Infof("User data already in redis cache!")
+		zap.S().Info("User data already in redis cache!")
 		return c.JSON(fiber.Map{
 			"error": false,
 			"user":  userDataWithCache,

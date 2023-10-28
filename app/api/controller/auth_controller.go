@@ -2,9 +2,9 @@ package controller
 
 import (
 	"fmt"
-	db_cache "github.com/bulutcan99/go-websocket/db/cache"
-	"github.com/bulutcan99/go-websocket/db/repository"
-	"github.com/bulutcan99/go-websocket/model"
+	"github.com/bulutcan99/go-websocket/internal/db/cache"
+	"github.com/bulutcan99/go-websocket/internal/db/repository"
+	model2 "github.com/bulutcan99/go-websocket/internal/model"
 	custom_error "github.com/bulutcan99/go-websocket/pkg/error"
 	"github.com/bulutcan99/go-websocket/pkg/helper"
 	"github.com/bulutcan99/go-websocket/pkg/token"
@@ -35,7 +35,7 @@ func NewAuthController(authRepo *repository.AuthRepo, redisC *db_cache.RedisCach
 }
 
 func (ac *AuthController) UserRegister(c *fiber.Ctx) error {
-	signUp := &model.Register{}
+	signUp := &model2.Register{}
 	if err := c.BodyParser(signUp); err != nil {
 		return custom_error.ParseError()
 	}
@@ -60,7 +60,7 @@ func (ac *AuthController) UserRegister(c *fiber.Ctx) error {
 		return custom_error.ValidationError()
 	}
 
-	user := model.User{
+	user := model2.User{
 		ID:           uuid.New(),
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),
@@ -87,7 +87,7 @@ func (ac *AuthController) UserRegister(c *fiber.Ctx) error {
 }
 
 func (ac *AuthController) UserLogin(c *fiber.Ctx) error {
-	signIn := &model.SignIn{}
+	signIn := &model2.SignIn{}
 	if err := c.BodyParser(signIn); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": true,
@@ -137,7 +137,7 @@ func (ac *AuthController) UserLogin(c *fiber.Ctx) error {
 		})
 	} else {
 
-		zap.S().Infof("User data already in redis cache!")
+		zap.S().Info("User data already in redis cache!")
 		isComparedUserPass := utility.ComparePasswords(userDataWithCache.UserPasswordHash, signIn.Password)
 		if !isComparedUserPass {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{

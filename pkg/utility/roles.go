@@ -1,18 +1,18 @@
 package utility
 
 import (
-	"fmt"
+	"errors"
 	"go.uber.org/zap"
 )
 
 func VerifyRole(role string) (string, error) {
 	switch role {
 	case AdminRoleName:
-		zap.S().Infof("Admin user created successfully!")
+		zap.S().Info("Admin user created successfully!")
 	case UserRoleName:
-		zap.S().Infof("User created successfully!")
+		zap.S().Info("User created successfully!")
 	default:
-		return "", fmt.Errorf("role '%v' does not exist", role)
+		return "", errors.New("role does not exist")
 	}
 
 	return role, nil

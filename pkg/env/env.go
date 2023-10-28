@@ -30,8 +30,11 @@ type ENV struct {
 	RedisPort                     int    `env:"REDIS_PORT,required"`
 	RedisPassword                 string `env:"REDIS_PASSWORD,required"`
 	RedisDBNumber                 int    `env:"REDIS_DB_NUMBER,required"`
-	RabbitMQUrl                   string `env:"RABBITMQ_URL,required"`
-	LogLevel                      string `env:"LOG_LEVEL,required"`
+	KafkaHost                     string `env:"KAFKA_HOST,required"`
+	KafkaPort                     int    `env:"KAFKA_PORT,required"`
+	KafkaMessageTopic             string `env:"KAFKA_MESSAGE_TOPIC,required"`
+	// KafkaNotificationTopic        string `env:"KAFKA_NOTIFICATION_TOPIC,required"`
+	LogLevel string `env:"LOG_LEVEL,required"`
 }
 
 var doOnce sync.Once

@@ -47,7 +47,7 @@ func NewRedisConnection() *Redis {
 		client = redisClient
 	})
 
-	zap.S().Infof("Connected to Redis successfully.")
+	zap.S().Info("Connected to Redis successfully.")
 	return &Redis{
 		Client:  client,
 		Context: ctx,
@@ -56,8 +56,8 @@ func NewRedisConnection() *Redis {
 
 func (r *Redis) Close() {
 	if err := r.Client.Close(); err != nil {
-		zap.S().Errorf("Error while closing the Redis connection: %s\n", err)
+		zap.S().Errorf("Error while closing the Redis connection: %s", err)
 	}
 
-	zap.S().Infof("Connection to Redis closed successfully")
+	zap.S().Info("Connection to Redis closed successfully")
 }

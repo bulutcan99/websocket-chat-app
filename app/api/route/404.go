@@ -1,7 +1,7 @@
 package route
 
 import (
-	"github.com/bulutcan99/go-websocket/model"
+	"github.com/bulutcan99/go-websocket/internal/model"
 	"github.com/gofiber/fiber/v2"
 )
 

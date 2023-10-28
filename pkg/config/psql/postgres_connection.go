@@ -56,7 +56,7 @@ func NewPostgreSQLConnection() *PostgreSQL {
 func (pg *PostgreSQL) Close() {
 	err := pg.Client.Close()
 	if err != nil {
-		zap.S().Errorf("Error while closing the database connection: %s\n", err)
+		zap.S().Errorf("Error while closing the database connection: %s", err)
 	}
 
 	zap.S().Infof("Connection to Postgres closed successfully")

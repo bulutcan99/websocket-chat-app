@@ -2,7 +2,7 @@ package repository
 
 import (
 	"context"
-	"github.com/bulutcan99/go-websocket/model"
+	"github.com/bulutcan99/go-websocket/internal/model"
 	config_psql "github.com/bulutcan99/go-websocket/pkg/config/psql"
 	custom_error "github.com/bulutcan99/go-websocket/pkg/error"
 	"github.com/google/uuid"

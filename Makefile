@@ -2,7 +2,7 @@
 
 APP_NAME = chatapp
 BUILD_DIR = $(PWD)/build
-MIGRATIONS_FOLDER = $(PWD)/db/migration
+MIGRATIONS_FOLDER = $(PWD)/internal/db/migration
 DATABASE_URL=postgres://myuser:pass@localhost:5432/postgres?sslmode=disable
 
 clean:

@@ -6,17 +6,18 @@ import (
 )
 
 var (
-	DB_HOST      = &env.Env.DbHost
-	DB_PORT      = &env.Env.DbPort
-	DB_USER      = &env.Env.DbUser
-	DB_PASSWORD  = &env.Env.DbPassword
-	DB_NAME      = &env.Env.DbName
-	DB_SSL_MODE  = &env.Env.DbSSLMode
-	REDIS_HOST   = &env.Env.RedisHost
-	REDIS_PORT   = &env.Env.RedisPort
-	SERVER_HOST  = &env.Env.ServerHost
-	SERVER_PORT  = &env.Env.ServerPort
-	RABBITMQ_URL = &env.Env.RabbitMQUrl
+	DB_HOST     = &env.Env.DbHost
+	DB_PORT     = &env.Env.DbPort
+	DB_USER     = &env.Env.DbUser
+	DB_PASSWORD = &env.Env.DbPassword
+	DB_NAME     = &env.Env.DbName
+	DB_SSL_MODE = &env.Env.DbSSLMode
+	REDIS_HOST  = &env.Env.RedisHost
+	REDIS_PORT  = &env.Env.RedisPort
+	SERVER_HOST = &env.Env.ServerHost
+	SERVER_PORT = &env.Env.ServerPort
+	KAFKA_HOST  = &env.Env.KafkaHost
+	KAFKA_PORT  = &env.Env.KafkaPort
 )
 
 func ConnectionURLBuilder(n string) (string, error) {
@@ -38,15 +39,19 @@ func ConnectionURLBuilder(n string) (string, error) {
 			*REDIS_HOST,
 			*REDIS_PORT,
 		)
-	case "rabbitmq":
+	case "kafka":
 		url = fmt.Sprintf(
-			"%s", *RABBITMQ_URL)
+			"%s:%d",
+			*KAFKA_HOST,
+			*KAFKA_PORT,
+		)
 	case "fiber":
 		url = fmt.Sprintf(
 			"%s:%d",
 			*SERVER_HOST,
 			*SERVER_PORT,
 		)
+
 	default:
 		return "", fmt.Errorf("connection name '%v' is not supported", n)
 	}

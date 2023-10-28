@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/bulutcan99/go-websocket/model"
+	"github.com/bulutcan99/go-websocket/internal/model"
 	redis2 "github.com/bulutcan99/go-websocket/pkg/config/redis"
 	"github.com/bulutcan99/go-websocket/pkg/token"
 	"github.com/redis/go-redis/v9"
