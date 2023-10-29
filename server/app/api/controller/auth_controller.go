@@ -1,11 +1,9 @@
 package controller
 
 import (
-	"fmt"
-	"github.com/bulutcan99/go-websocket/internal/db/cache"
-	"github.com/bulutcan99/go-websocket/internal/db/repository"
-	model2 "github.com/bulutcan99/go-websocket/internal/model"
-	custom_error "github.com/bulutcan99/go-websocket/pkg/error"
+	"github.com/bulutcan99/go-websocket/internal/model"
+	"github.com/bulutcan99/go-websocket/internal/platform/cache"
+	"github.com/bulutcan99/go-websocket/internal/platform/repository"
 	"github.com/bulutcan99/go-websocket/pkg/helper"
 	"github.com/bulutcan99/go-websocket/pkg/token"
 	"github.com/bulutcan99/go-websocket/pkg/utility"
@@ -35,19 +33,30 @@ func NewAuthController(authRepo *repository.AuthRepo, redisC *db_cache.RedisCach
 }
 
 func (ac *AuthController) UserRegister(c *fiber.Ctx) error {
-	signUp := &model2.Register{}
+	signUp := &model.Register{}
 	if err := c.BodyParser(signUp); err != nil {
-		return custom_error.ParseError()
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": true,
+			"msg":   "error while trying to parse body",
+		})
 	}
 
 	err := helper.EmailValidator(signUp.Email)
 	if err != nil {
-		return fmt.Errorf("error while trying to set validation funcEmail, %w", err)
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": true,
+			"msg":   "Email is not valid",
+		})
 	}
+
 	err = helper.PasswordValidator(signUp.Password)
 	if err != nil {
-		return fmt.Errorf("error while trying to set validation funcPass, %w", err)
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": true,
+			"msg":   "Password is not valid",
+		})
 	}
+
 	err = helper.RoleValidator(signUp.UserRole)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -55,13 +64,9 @@ func (ac *AuthController) UserRegister(c *fiber.Ctx) error {
 			"msg":   "Role must be admin or user",
 		})
 	}
-	_, errVerify := utility.VerifyRole(signUp.UserRole)
-	if errVerify != nil {
-		return custom_error.ValidationError()
-	}
 
-	user := model2.User{
-		ID:           uuid.New(),
+	user := model.User{
+		UUID:         uuid.New(),
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),
 		NameSurname:  signUp.NameSurname,
@@ -72,10 +77,9 @@ func (ac *AuthController) UserRegister(c *fiber.Ctx) error {
 	}
 
 	if errCreate := ac.repo.CreateUser(user); errCreate != nil {
-		errMsg := fmt.Sprintf("There is an error while create: %v", errCreate)
-		return c.JSON(fiber.Map{
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": true,
-			"msg":   errMsg,
+			"msg":   "There is a problem while trying to create user",
 		})
 	}
 
@@ -87,7 +91,7 @@ func (ac *AuthController) UserRegister(c *fiber.Ctx) error {
 }
 
 func (ac *AuthController) UserLogin(c *fiber.Ctx) error {
-	signIn := &model2.SignIn{}
+	signIn := &model.SignIn{}
 	if err := c.BodyParser(signIn); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": true,
@@ -114,8 +118,8 @@ func (ac *AuthController) UserLogin(c *fiber.Ctx) error {
 		}
 
 		role := getUser.UserRole
-		userId := getUser.ID.String()
-		tokens, err := token.GenerateNewTokens(getUser.ID.String(), role, getUser.Email)
+		userId := getUser.UUID.String()
+		tokens, err := token.GenerateNewTokens(getUser.UUID.String(), role, getUser.Email)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": true,
@@ -187,7 +191,7 @@ func (ac *AuthController) UserLogOut(c *fiber.Ctx) error {
 		})
 	}
 
-	err = ac.redisCache.DeleteAllUserData(tokenMetaData.Email, tokenMetaData.ID)
+	err = ac.redisCache.DeleteAllUserData(tokenMetaData.Email, tokenMetaData.UUID)
 	if err != nil {
 		return c.JSON(fiber.Map{
 			"error": true,
@@ -220,7 +224,7 @@ func (ac *AuthController) TokenProtection(c *fiber.Ctx) (error, *token.TokenMeta
 		}), nil
 	}
 
-	userTokenCache, err := ac.redisCache.GetUserTokenData(tokenMetaData.ID)
+	userTokenCache, err := ac.redisCache.GetUserTokenData(tokenMetaData.UUID)
 	if err != nil {
 		return c.JSON(fiber.Map{
 			"error": true,

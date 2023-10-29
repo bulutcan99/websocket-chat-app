@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/bulutcan99/go-websocket/internal/model"
-	redis2 "github.com/bulutcan99/go-websocket/pkg/config/redis"
+	config_redis "github.com/bulutcan99/go-websocket/pkg/config/redis"
 	"github.com/bulutcan99/go-websocket/pkg/token"
 	"github.com/redis/go-redis/v9"
 	"strconv"
@@ -35,7 +35,7 @@ type RedisCache struct {
 	context context.Context
 }
 
-func NewRedisCache(redis *redis2.Redis) *RedisCache {
+func NewRedisCache(redis *config_redis.Redis) *RedisCache {
 	return &RedisCache{
 		client:  redis.Client,
 		context: redis.Context,
@@ -153,7 +153,7 @@ func (rc *RedisCache) SetUserData(id string, user *UserCache) error {
 
 func (rc *RedisCache) DbUserToCacheUser(user *model.User) *UserCache {
 	return &UserCache{
-		UserID:           user.ID.String(),
+		UserID:           user.UUID.String(),
 		UserEmail:        user.Email,
 		UserRole:         user.UserRole,
 		UserCreatedAt:    user.CreatedAt.Format(time.RFC3339),

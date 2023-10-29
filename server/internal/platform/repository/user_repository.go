@@ -30,7 +30,7 @@ func NewUserRepo(psql *config_psql.PostgreSQL) *UserRepo {
 func (r *UserRepo) GetUserSelf(id uuid.UUID) (*model.User, error) {
 	var user model.User
 	query := `SELECT * FROM users WHERE id = $1`
-	err := r.db.QueryRowContext(r.context, query, id).Scan(&user.ID, &user.CreatedAt, &user.UpdatedAt, &user.Email, &user.NameSurname, &user.PasswordHash, &user.Status, &user.UserRole)
+	err := r.db.QueryRowContext(r.context, query, id).Scan(&user.UUID, &user.CreatedAt, &user.UpdatedAt, &user.Email, &user.NameSurname, &user.PasswordHash, &user.Status, &user.UserRole)
 	if err != nil {
 		return nil, custom_error.DatabaseError()
 	}
@@ -41,7 +41,7 @@ func (r *UserRepo) GetUserSelf(id uuid.UUID) (*model.User, error) {
 func (r *UserRepo) GetShowAnotherUserByEmail(email string) (*model.UserShown, error) {
 	var user model.User
 	query := `SELECT * FROM users WHERE email = $1`
-	err := r.db.QueryRowContext(r.context, query, email).Scan(&user.ID, &user.CreatedAt, &user.UpdatedAt, &user.Email, &user.NameSurname, &user.PasswordHash, &user.Status, &user.UserRole)
+	err := r.db.QueryRowContext(r.context, query, email).Scan(&user.UUID, &user.CreatedAt, &user.UpdatedAt, &user.Email, &user.NameSurname, &user.PasswordHash, &user.Status, &user.UserRole)
 	if err != nil {
 		return nil, custom_error.DatabaseError()
 	}

@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/IBM/sarama"
 	config_builder "github.com/bulutcan99/go-websocket/pkg/config"
-	"github.com/bulutcan99/go-websocket/pkg/env"
 	"go.uber.org/zap"
 	"strings"
 	"sync"
@@ -14,7 +13,6 @@ var (
 	doOnce        sync.Once
 	kafkaClient   sarama.Client
 	kafkaConsumer sarama.Consumer
-	topic         = &env.Env.KafkaMessageTopic
 )
 
 type ConsumerKafka struct {

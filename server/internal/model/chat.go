@@ -17,7 +17,7 @@ const (
 
 // Message represents the message sent through websocket.
 type Message struct {
-	ID           uuid.UUID           `json:"id"`
+	UUID         uuid.UUID           `json:"id"`
 	Text         string              `json:"text"`
 	Timestamp    timestamp.Timestamp `json:"timestamp"`
 	SenderUser   uuid.UUID           `json:"sender_user"`
@@ -25,7 +25,7 @@ type Message struct {
 }
 
 type Notification struct {
-	ID           uuid.UUID           `json:"id"`
+	UUID         uuid.UUID           `json:"id"`
 	Notification string              `json:"notification"`
 	Timestamp    timestamp.Timestamp `json:"timestamp"`
 	SenderUser   uuid.UUID           `json:"sender_user"`

@@ -1,9 +1,9 @@
 package controller
 
 import (
-	"github.com/bulutcan99/go-websocket/internal/db/cache"
-	"github.com/bulutcan99/go-websocket/internal/db/repository"
 	"github.com/bulutcan99/go-websocket/internal/model"
+	"github.com/bulutcan99/go-websocket/internal/platform/cache"
+	"github.com/bulutcan99/go-websocket/internal/platform/repository"
 	custom_error "github.com/bulutcan99/go-websocket/pkg/error"
 	"github.com/bulutcan99/go-websocket/pkg/utility"
 	"github.com/gofiber/fiber/v2"
@@ -41,9 +41,9 @@ func (uc *UserController) GetUserSelfInfo(c *fiber.Ctx) error {
 		})
 	}
 
-	userDataWithCache, err := uc.redisCache.GetUserDataById(tokenMetaData.ID)
+	userDataWithCache, err := uc.redisCache.GetUserDataById(tokenMetaData.UUID)
 	if err == redis.Nil {
-		id, err := uuid.Parse(tokenMetaData.ID)
+		id, err := uuid.Parse(tokenMetaData.UUID)
 		user, err := uc.repo.GetUserSelf(id)
 		if err != nil {
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
@@ -105,7 +105,7 @@ func (uc *UserController) UpdatePasswordHandler(c *fiber.Ctx) error {
 		return custom_error.ParseError()
 	}
 
-	id, errUuid := uuid.Parse(tokenMetaData.ID)
+	id, errUuid := uuid.Parse(tokenMetaData.UUID)
 	if errUuid != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": true,
@@ -122,7 +122,7 @@ func (uc *UserController) UpdatePasswordHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	errUpdateRedis := uc.redisCache.UpdateUserPasswordHash(tokenMetaData.ID, newPassHash)
+	errUpdateRedis := uc.redisCache.UpdateUserPasswordHash(tokenMetaData.UUID, newPassHash)
 	if errUpdateRedis != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": true,
