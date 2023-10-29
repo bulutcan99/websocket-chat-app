@@ -85,7 +85,7 @@ const Register = () => {
             justifyContent={"center"}
             alignItems={"center"}
             width={"100%"}
-            height={"20%"}
+            height={"30%"}
             fontSize={30}
             fontWeight={"bold"}
             letterSpacing={4}
@@ -95,169 +95,174 @@ const Register = () => {
           >
             REGISTER
           </Text>
-          <Formik initialValues={{}} onSubmit={() => {}}>
-            <Form>
-              <CustomFormikInput
-                name="name_surname"
-                id="name_surname"
-                placeholder={"Name Surname"}
-                leftIcon={
-                  <Box
-                    opacity={focusedInput?.nameSurname ? 0.8 : 0.5}
-                    transition={"opacity 500ms"}
-                  >
-                    <UserIcon width={24} height={24} fill="midnightblue" />
-                  </Box>
-                }
-                type={"text"}
-                onChange={(e: FormEvent<HTMLInputElement>) => {
-                  setNameSurnameValue(e.currentTarget.value);
-                }}
-                onFocus={() => {
-                  setFocusedInput((prev) => ({ ...prev, nameSurname: true }));
-                }}
-                onBlur={() => {
-                  setFocusedInput((prev) => ({ ...prev, nameSurname: false }));
-                }}
-                containerSettings={{
-                  outline: focusedInput?.nameSurname
-                    ? "1px solid midnightblue"
-                    : "none",
-                  transition: "outline 500ms",
-                }}
-              />
-              <CustomFormikInput
-                name="email"
-                id="email"
-                placeholder={"Email"}
-                leftIcon={
-                  <Box
-                    opacity={focusedInput?.email ? 0.8 : 0.5}
-                    transition={"opacity 500ms"}
-                  >
-                    <EmailIncon width={24} height={24} fill="midnightblue" />
-                  </Box>
-                }
-                type={"text"}
-                onChange={(e: FormEvent<HTMLInputElement>) => {
-                  setEmailValue(e.currentTarget.value);
-                }}
-                onFocus={() => {
-                  setFocusedInput((prev) => ({ ...prev, email: true }));
-                }}
-                onBlur={() => {
-                  setFocusedInput((prev) => ({ ...prev, email: false }));
-                }}
-                containerSettings={{
-                  marginTop: "16px",
-                  outline: focusedInput?.email
-                    ? "1px solid midnightblue"
-                    : "none",
-                  transition: "outline 500ms",
-                }}
-              />
-              <CustomFormikInput
-                name="password"
-                id="password"
-                placeholder={"Password"}
-                leftIcon={
-                  <Box
-                    opacity={focusedInput?.password ? 0.8 : 0.5}
-                    transition={"opacity 500ms"}
-                  >
-                    <LockIcon width={24} height={24} fill="midnightblue" />
-                  </Box>
-                }
-                rightIcon={
-                  passwordInputType === InputType.PASSWORD ? (
+          <Box height={"40%"}>
+            <Formik initialValues={{}} onSubmit={() => {}}>
+              <Form>
+                <CustomFormikInput
+                  name="name_surname"
+                  id="name_surname"
+                  placeholder={"Name Surname"}
+                  leftIcon={
                     <Box
-                      userSelect={"none"}
-                      cursor={"pointer"}
-                      onClick={() => {
-                        setPasswordInputType(InputType.TEXT);
-                      }}
+                      opacity={focusedInput?.nameSurname ? 0.8 : 0.5}
+                      transition={"opacity 500ms"}
                     >
-                      <EyeIcon
-                        width={20}
-                        height={20}
-                        fill="midnightblue"
-                        opacity={0.8}
-                      />
+                      <UserIcon width={24} height={24} fill="midnightblue" />
                     </Box>
-                  ) : (
+                  }
+                  type={"text"}
+                  onChange={(e: FormEvent<HTMLInputElement>) => {
+                    setNameSurnameValue(e.currentTarget.value);
+                  }}
+                  onFocus={() => {
+                    setFocusedInput((prev) => ({ ...prev, nameSurname: true }));
+                  }}
+                  onBlur={() => {
+                    setFocusedInput((prev) => ({
+                      ...prev,
+                      nameSurname: false,
+                    }));
+                  }}
+                  containerSettings={{
+                    outline: focusedInput?.nameSurname
+                      ? "1px solid midnightblue"
+                      : "none",
+                    transition: "outline 500ms",
+                  }}
+                />
+                <CustomFormikInput
+                  name="email"
+                  id="email"
+                  placeholder={"Email"}
+                  leftIcon={
                     <Box
-                      userSelect={"none"}
-                      cursor={"pointer"}
-                      onClick={() => {
-                        setPasswordInputType(InputType.PASSWORD);
-                      }}
+                      opacity={focusedInput?.email ? 0.8 : 0.5}
+                      transition={"opacity 500ms"}
                     >
-                      <EyeLineIcon
-                        width={20}
-                        height={20}
-                        fill="midnightblue"
-                        opacity={0.8}
-                      />
+                      <EmailIncon width={24} height={24} fill="midnightblue" />
                     </Box>
-                  )
-                }
-                type={passwordInputType}
-                onChange={(e: FormEvent<HTMLInputElement>) => {
-                  setpasswordValue(e.currentTarget.value);
-                }}
-                onFocus={() => {
-                  setFocusedInput((prev) => ({ ...prev, password: true }));
-                }}
-                onBlur={() => {
-                  setFocusedInput((prev) => ({ ...prev, password: false }));
-                }}
-                containerSettings={{
-                  marginTop: "16px",
-                  outline: focusedInput?.password
-                    ? "1px solid midnightblue"
-                    : "none",
-                  transition: "outline 500ms",
-                }}
-              />
-            </Form>
-          </Formik>
-          <Flex
-            flexDirection={"column"}
-            alignItems={"flex-start"}
-            justifyContent={"center"}
-            overflow={"hidden"}
-            height={passwordValue?.length ? 95 : 0}
-            transition={"height 500ms"}
-            userSelect={"none"}
-          >
-            <Text color={validation?.isMinLength ? "red" : "green"}>
-              Must be at least 9 characters long.
-            </Text>
-            <Text color={validation?.isUpperCharacter ? "green" : "red"}>
-              Must contain at least one uppercase letter.
-            </Text>
-            <Text color={validation?.isLowerCharacter ? "green" : "red"}>
-              Must contain at least one lowercase letter.
-            </Text>
-            <Text color={validation?.isNumber ? "green" : "red"}>
-              Must contain at least one digit.
-            </Text>
-          </Flex>
-          <Button
-            width={"100%"}
-            color={"black"}
-            backgroundColor={"gray.200"}
-            transition={"color 500ms, background-color 500ms"}
-            _hover={{ backgroundColor: "midnightblue", color: "white" }}
-            onClick={handleRegisterClick}
-          >
-            REGISTER NOW
-          </Button>
-
+                  }
+                  type={"text"}
+                  onChange={(e: FormEvent<HTMLInputElement>) => {
+                    setEmailValue(e.currentTarget.value);
+                  }}
+                  onFocus={() => {
+                    setFocusedInput((prev) => ({ ...prev, email: true }));
+                  }}
+                  onBlur={() => {
+                    setFocusedInput((prev) => ({ ...prev, email: false }));
+                  }}
+                  containerSettings={{
+                    marginTop: "16px",
+                    outline: focusedInput?.email
+                      ? "1px solid midnightblue"
+                      : "none",
+                    transition: "outline 500ms",
+                  }}
+                />
+                <CustomFormikInput
+                  name="password"
+                  id="password"
+                  placeholder={"Password"}
+                  leftIcon={
+                    <Box
+                      opacity={focusedInput?.password ? 0.8 : 0.5}
+                      transition={"opacity 500ms"}
+                    >
+                      <LockIcon width={24} height={24} fill="midnightblue" />
+                    </Box>
+                  }
+                  rightIcon={
+                    passwordInputType === InputType.PASSWORD ? (
+                      <Box
+                        userSelect={"none"}
+                        cursor={"pointer"}
+                        onClick={() => {
+                          setPasswordInputType(InputType.TEXT);
+                        }}
+                      >
+                        <EyeIcon
+                          width={20}
+                          height={20}
+                          fill="midnightblue"
+                          opacity={0.8}
+                        />
+                      </Box>
+                    ) : (
+                      <Box
+                        userSelect={"none"}
+                        cursor={"pointer"}
+                        onClick={() => {
+                          setPasswordInputType(InputType.PASSWORD);
+                        }}
+                      >
+                        <EyeLineIcon
+                          width={20}
+                          height={20}
+                          fill="midnightblue"
+                          opacity={0.8}
+                        />
+                      </Box>
+                    )
+                  }
+                  type={passwordInputType}
+                  onChange={(e: FormEvent<HTMLInputElement>) => {
+                    setpasswordValue(e.currentTarget.value);
+                  }}
+                  onFocus={() => {
+                    setFocusedInput((prev) => ({ ...prev, password: true }));
+                  }}
+                  onBlur={() => {
+                    setFocusedInput((prev) => ({ ...prev, password: false }));
+                  }}
+                  containerSettings={{
+                    marginTop: "16px",
+                    outline: focusedInput?.password
+                      ? "1px solid midnightblue"
+                      : "none",
+                    transition: "outline 500ms",
+                  }}
+                />
+              </Form>
+            </Formik>
+            <Flex
+              flexDirection={"column"}
+              alignItems={"flex-start"}
+              justifyContent={"center"}
+              overflow={"hidden"}
+              height={passwordValue?.length ? 95 : 0}
+              transition={"height 500ms"}
+              userSelect={"none"}
+            >
+              <Text color={validation?.isMinLength ? "red" : "green"}>
+                Must be at least 9 characters long.
+              </Text>
+              <Text color={validation?.isUpperCharacter ? "green" : "red"}>
+                Must contain at least one uppercase letter.
+              </Text>
+              <Text color={validation?.isLowerCharacter ? "green" : "red"}>
+                Must contain at least one lowercase letter.
+              </Text>
+              <Text color={validation?.isNumber ? "green" : "red"}>
+                Must contain at least one digit.
+              </Text>
+            </Flex>
+            <Button
+              width={"100%"}
+              color={"black"}
+              marginTop={"16px"}
+              backgroundColor={"gray.100"}
+              transition={"color 500ms, background-color 500ms"}
+              _hover={{ backgroundColor: "midnightblue", color: "white" }}
+              onClick={handleRegisterClick}
+            >
+              REGISTER NOW
+            </Button>
+          </Box>
           <Flex
             justifyContent={"center"}
             alignItems={"flex-end"}
-            height={"20%"}
+            height={"30%"}
           >
             Already a member! Let's
             <Text

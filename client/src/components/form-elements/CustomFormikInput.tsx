@@ -36,7 +36,7 @@ const CustomFormikInput = ({
       width={"100%"}
       paddingLeft={"10px"}
       paddingRight={"10px"}
-      backgroundColor={theme.colors.gray["100"]}
+      backgroundColor={"gray.100"}
       borderRadius={"2px"}
       padding={"10px"}
       {...containerSettings}
