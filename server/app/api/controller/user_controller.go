@@ -100,7 +100,7 @@ func (uc *UserController) UpdatePasswordHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	newPass := &model.PasswordUpdate{}
+	var newPass *model.PasswordUpdate
 	if err := c.BodyParser(newPass); err != nil {
 		return custom_error.ParseError()
 	}

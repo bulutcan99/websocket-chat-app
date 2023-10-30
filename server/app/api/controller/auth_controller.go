@@ -68,10 +68,9 @@ func (ac *AuthController) UserRegister(c *fiber.Ctx) error {
 	user := model.User{
 		UUID:         uuid.New(),
 		CreatedAt:    time.Now(),
-		UpdatedAt:    time.Now(),
-		NameSurname:  signUp.NameSurname,
+		UserName:     signUp.Name,
 		Email:        signUp.Email,
-		PasswordHash: utility.GeneratePassword(signUp.Password),
+		Passwordhash: utility.GeneratePassword(signUp.Password),
 		Status:       1,
 		UserRole:     signUp.UserRole,
 	}
@@ -109,7 +108,7 @@ func (ac *AuthController) UserLogin(c *fiber.Ctx) error {
 			})
 		}
 
-		isComparedUserPass := utility.ComparePasswords(getUser.PasswordHash, signIn.Password)
+		isComparedUserPass := utility.ComparePasswords(getUser.Passwordhash, signIn.Password)
 		if !isComparedUserPass {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error": true,

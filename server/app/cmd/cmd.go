@@ -4,7 +4,9 @@ import (
 	"github.com/bulutcan99/go-websocket/app/api/controller"
 	"github.com/bulutcan99/go-websocket/app/api/middleware"
 	"github.com/bulutcan99/go-websocket/app/api/route"
+	"github.com/bulutcan99/go-websocket/app/chat"
 	"github.com/bulutcan99/go-websocket/internal/platform/cache"
+	"github.com/bulutcan99/go-websocket/internal/platform/pubsub"
 	"github.com/bulutcan99/go-websocket/internal/platform/repository"
 	config_builder "github.com/bulutcan99/go-websocket/pkg/config"
 	config_fiber "github.com/bulutcan99/go-websocket/pkg/config/fiber"
@@ -46,16 +48,19 @@ func Start() {
 	authRepo := repository.NewAuthUserRepo(Psql)
 	userRepo := repository.NewUserRepo(Psql)
 	redisCache := db_cache.NewRedisCache(Redis)
-	// kafkaProducer := pubsub.NewKafkaPublisher(*KafkaProducer)
-	// kafkaConsumer := pubsub.NewKafkaSubscriber(*KafkaConsumer)
+	kafkaProducer := pubsub.NewKafkaPublisher(*KafkaProducer)
+	kafkaConsumer := pubsub.NewKafkaSubscriber(*KafkaConsumer)
+	newHub := chat.NewHub()
 	authController := controller.NewAuthController(authRepo, redisCache)
 	userController := controller.NewUserController(userRepo, redisCache, authController)
+	hubController := controller.NewHubController(newHub, *kafkaProducer, *kafkaConsumer)
 	cfg := config_builder.ConfigFiber()
 	app := fiber.New(cfg)
 	middleware.MiddlewareFiber(app)
 	route.Index("/", app)
 	route.AuthRoutes(app, authController)
 	route.UserRoutes(app, userController)
+	route.ChatRoutes(app, hubController)
 	if Env.StageStatus == stageStatus {
 		config_fiber.StartServer(app)
 	} else {
