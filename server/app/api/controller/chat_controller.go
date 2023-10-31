@@ -1,68 +1,140 @@
 package controller
 
 import (
-	"github.com/bulutcan99/go-websocket/app/chat"
+	"github.com/bulutcan99/go-websocket/internal/model"
 	"github.com/bulutcan99/go-websocket/internal/platform/pubsub"
+	"github.com/bulutcan99/go-websocket/internal/platform/repository"
+	wsocket "github.com/bulutcan99/go-websocket/internal/ws"
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	"time"
 )
 
 type HubInterface interface {
-	CreateRoom(roomName string) (*chat.ChatRoom, error)
+	CreateRoom(roomName string) (*wsocket.Room, error)
 }
 
 type HubController struct {
-	hub *chat.Hub
-	pub pubsub.KafkaPublisher
-	sub pubsub.KafkaSubscriber
+	hub  *wsocket.Hub
+	repo *repository.ChatRepo
+	auth *AuthController
+	pub  *pubsub.KafkaPublisher
+	sub  *pubsub.KafkaSubscriber
 }
 
-func NewHubController(hub *chat.Hub, pub pubsub.KafkaPublisher, sub pubsub.KafkaSubscriber) HubController {
-	return HubController{
-		hub: hub,
-		pub: pub,
-		sub: sub,
+func NewHubController(hub *wsocket.Hub, chatRepo *repository.ChatRepo, authCont *AuthController, pub *pubsub.KafkaPublisher, sub *pubsub.KafkaSubscriber) *HubController {
+	return &HubController{
+		hub:  hub,
+		repo: chatRepo,
+		auth: authCont,
+		pub:  pub,
+		sub:  sub,
 	}
 }
 
 type CreateNewRoom struct {
-	RoomName string `json:"room_name"`
+	Name string `json:"room_name"`
 }
 
 func (h *HubController) CreateRoom(c *fiber.Ctx) error {
-	var body CreateNewRoom
-	if err := c.BodyParser(&body); err != nil {
-		return err
+	var req CreateNewRoom
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": true,
+			"msg":   "Bad Request",
+		})
 	}
 
-	newRoomUUID := uuid.New()
-	h.hub.Rooms[newRoomUUID.String()] = &chat.ChatRoom{
-		UUID:         uuid.New(),
-		Name:         body.RoomName,
-		MessageCount: 0,
-		Clients:      make(map[string]*chat.Client),
-		CreatedAt:    time.Now(),
-		DeletedAt:    nil,
+	roomId := uuid.New().String()
+	h.hub.Rooms[roomId] = &wsocket.Room{
+		UUID:    roomId,
+		Name:    req.Name,
+		Clients: make(map[string]*wsocket.Client),
 	}
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+	return c.JSON(fiber.Map{
 		"error": false,
-		"msg":   "New room created",
+		"Room":  req.Name,
 	})
 }
 
-func (h *HubController) JoinRoom(c *websocket.Conn) error {
-	roomUUID := c.Params("roomUUID")
-	clientUUID := c.Query("userUUID")
-	nickame := c.Query("nickname")
+func (h *HubController) JoinRoom(c *websocket.Conn) {
+	roomId := c.Params("roomID")
+	userId := c.Query("userID")
+	nickname := c.Query("nickname")
 
-	if _, ok := h.hub.Rooms[roomUUID]; !ok {
-		return c.WriteMessage(websocket.TextMessage, []byte("Room not found"))
+	if _, ok := h.hub.Rooms[roomId]; !ok {
+		c.WriteMessage(websocket.TextMessage, []byte("Room Not Found"))
 		c.Close()
-	} else {
-
 	}
 
+	if _, ok := h.hub.Rooms[roomId].Clients[userId]; ok {
+		c.WriteMessage(websocket.TextMessage, []byte("User Already Joined"))
+		c.Close()
+	}
+
+	userUUID := uuid.MustParse(userId)
+	roomUUID := uuid.MustParse(roomId)
+	client := &wsocket.Client{
+		Conn:     c,
+		Message:  make(chan *wsocket.Message, 10),
+		UUID:     userUUID,
+		RoomUUID: roomUUID,
+		Nickname: nickname,
+	}
+
+	h.hub.Rooms[roomId].Clients[userId] = client
+
+	go client.WriteMessage()
+	go client.ReadMessage(h.hub)
+}
+
+func (h *HubController) GetAllRooms(c *fiber.Ctx) error {
+	var rooms []wsocket.Room
+	for _, room := range h.hub.Rooms {
+		rooms = append(rooms, *room)
+	}
+
+	return c.JSON(fiber.Map{
+		"error": false,
+		"rooms": rooms,
+	})
+}
+
+func (h *HubController) GetAvailableRooms(c *fiber.Ctx) error {
+	var rooms []wsocket.Room
+	for _, room := range h.hub.Rooms {
+		if len(room.Clients) < 2 {
+			rooms = append(rooms, *room)
+		}
+	}
+
+	return c.JSON(fiber.Map{
+		"error": false,
+		"rooms": rooms,
+	})
+}
+
+func (h *HubController) GetRoomClients(c *fiber.Ctx) error {
+	roomId := c.Params("roomID")
+	var clients []model.ClientResponse
+
+	if _, ok := h.hub.Rooms[roomId]; !ok {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": true,
+			"msg":   "Room Not Found",
+		})
+	}
+
+	for _, client := range h.hub.Rooms[roomId].Clients {
+		clients = append(clients, model.ClientResponse{
+			UUID:     client.UUID,
+			Nickname: client.Nickname,
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"error":   false,
+		"clients": clients,
+	})
 }

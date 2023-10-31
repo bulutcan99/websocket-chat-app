@@ -7,9 +7,12 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func ChatRoutes(r fiber.Router, cont controller.HubController) {
+func ChatRoutes(r fiber.Router, cont *controller.HubController) {
 	route := r.Group("/chat-ws")
 	route.Post("/create-room", middleware.JWTProtection(), cont.CreateRoom)
+	route.Get("/get-all-rooms", middleware.JWTProtection(), cont.GetAllRooms)
+	route.Get("/get-available-rooms", middleware.JWTProtection(), cont.GetAvailableRooms)
+	route.Get("/get-room-clients", middleware.JWTProtection(), cont.GetRoomClients)
 	route.Use(middleware.FiberSocketUpgrade)
-	route.Post("/join-room", middleware.JWTProtection(), websocket.New(cont.JoinRoom))
+	route.Get("/join-room", middleware.JWTProtection(), websocket.New(cont.JoinRoom))
 }
