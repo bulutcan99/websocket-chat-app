@@ -1,8 +1,10 @@
 export type RegisterRequestBody = {
-  name_surname: string;
+  nickname: string;
+  name: string;
+  surname: string;
   email: string;
   password: string;
-  user_role: string;
+  user_role?: string;
 };
 
 export type CustomSelectOptions = {

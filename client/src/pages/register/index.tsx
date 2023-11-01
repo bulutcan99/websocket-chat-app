@@ -1,7 +1,7 @@
 import { Box, Text, Flex, Button } from "@chakra-ui/react";
 import EmailIncon from "@/components/icons/EmailIncon";
 import LockIcon from "@/components/icons/LockIcon";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import EyeIcon from "@/components/icons/EyeIcon";
 import EyeLineIcon from "@/components/icons/EyeLineIcon";
 import { AllPages, InputType } from "@/utils/types/enums";
@@ -12,16 +12,10 @@ import { fetchRegister } from "@/utils/api";
 import { Form, Formik, FormikHelpers } from "formik";
 import CustomFormikInput from "@/components/form-elements/CustomFormikInput";
 import CustomSelect from "@/components/form-elements/CustomSelect";
-
-export interface Values {
-  nickname: string;
-  name: string;
-}
+import { RegisterRequestBody } from "@/utils/types/types";
 
 const Register = () => {
-  const [emailValue, setEmailValue] = useState<string>("");
   const [passwordValue, setpasswordValue] = useState<string>("");
-  const [nameSurnameValue, setNameSurnameValue] = useState<string>("");
   const [validation, setValidation] = useState({
     isMinLength: false,
     isUpperCharacter: false,
@@ -66,18 +60,24 @@ const Register = () => {
     setValidation(validationSchema);
   }, [passwordValue, passwordValue?.length]);
 
-  const handleRegisterClick = () => {
-    fetchRegister({
-      name_surname: nameSurnameValue,
-      email: emailValue,
-      password: passwordValue,
-      user_role: "string",
-    });
-  };
+  const initialValues = useMemo(
+    () => ({
+      nickname: "",
+      name: "",
+      surname: "",
+      email: "",
+      password: "",
+    }),
+    []
+  );
 
-  const onSubmit = async (values: Values) => {
-    const allValues = { ...values, user_role: selectedUserRole.value };
-    console.log(allValues);
+  const onSubmit = async (values: RegisterRequestBody) => {
+    const allValues = {
+      ...values,
+      user_role: selectedUserRole.value,
+    };
+
+    fetchRegister(allValues);
   };
 
   return (
@@ -115,13 +115,7 @@ const Register = () => {
           </Text>
           <Formik
             style={{ height: "60%" }}
-            initialValues={{
-              nickname: "",
-              name: "",
-              surname: "",
-              email: "",
-              password: "",
-            }}
+            initialValues={initialValues}
             onSubmit={onSubmit}
           >
             {({ values, handleChange, setFieldValue }) => (
@@ -365,7 +359,6 @@ const Register = () => {
                   backgroundColor={"gray.100"}
                   transition={"color 500ms, background-color 500ms"}
                   _hover={{ backgroundColor: "midnightblue", color: "white" }}
-                  onClick={handleRegisterClick}
                 >
                   REGISTER NOW
                 </Button>
