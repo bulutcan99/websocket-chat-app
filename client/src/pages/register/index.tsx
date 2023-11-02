@@ -113,11 +113,7 @@ const Register = () => {
           >
             REGISTER
           </Text>
-          <Formik
-            style={{ height: "60%" }}
-            initialValues={initialValues}
-            onSubmit={onSubmit}
-          >
+          <Formik initialValues={initialValues} onSubmit={onSubmit}>
             {({ values, handleChange, setFieldValue }) => (
               <Form>
                 <CustomFormikInput
@@ -368,7 +364,8 @@ const Register = () => {
           <Flex
             justifyContent={"center"}
             alignItems={"flex-end"}
-            height={"20%"}
+            height={passwordValue?.length ? "7%" : "20%"}
+            transition={"height 500ms"}
           >
             Already a member! Let's
             <Text
@@ -376,8 +373,13 @@ const Register = () => {
               marginLeft={1}
               fontWeight={"bold"}
               cursor={"pointer"}
+              color={"black"}
+              _hover={{ color: "midnightblue" }}
+              transition={"color 500ms"}
             >
-              <Link href={"/"}>login.</Link>
+              <Link href={"/"} className="login-and-register-link">
+                Login.
+              </Link>
             </Text>
           </Flex>
         </Box>
