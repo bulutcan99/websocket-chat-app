@@ -13,6 +13,7 @@ import { Form, Formik, FormikHelpers } from "formik";
 import CustomFormikInput from "@/components/form-elements/CustomFormikInput";
 import CustomSelect from "@/components/form-elements/CustomSelect";
 import { RegisterRequestBody } from "@/utils/types/types";
+import { useAuthContext } from "@/contexts/AuthContext";
 
 const Register = () => {
   const [passwordValue, setpasswordValue] = useState<string>("");
@@ -37,6 +38,7 @@ const Register = () => {
     label: string;
   }>({ value: "user", label: "User" });
   const [isOptionOpen, setIsOptionOpen] = useState(false);
+  const { isAuthenticated } = useAuthContext();
 
   useEffect(() => {
     const validationSchema = {
@@ -77,7 +79,12 @@ const Register = () => {
       user_role: selectedUserRole.value,
     };
 
-    fetchRegister(allValues);
+    try {
+      const response = await fetchRegister(allValues);
+      console.log(response);
+    } catch (error) {
+      console.log("error:", error);
+    }
   };
 
   return (
