@@ -44,7 +44,7 @@ func (r *AuthRepo) CreateUser(u model.User) error {
 	_, err := r.db.ExecContext(
 		r.context,
 		query,
-		u.ID, u.CreatedAt, u.UpdatedAt, u.Email, u.NameSurname, u.PasswordHash, u.Status, u.UserRole,
+		u.UUID, u.CreatedAt, u.UpdatedAt, u.Email, u.NameSurname, u.PasswordHash, u.Status, u.UserRole,
 	)
 	if err != nil {
 		return err
@@ -56,7 +56,7 @@ func (r *AuthRepo) CreateUser(u model.User) error {
 func (r *AuthRepo) GetUserSignByEmail(email string) (*model.User, error) {
 	var user model.User
 	query := `SELECT * FROM users WHERE email = $1`
-	err := r.db.QueryRowContext(r.context, query, email).Scan(&user.ID, &user.CreatedAt, &user.UpdatedAt, &user.Email, &user.NameSurname, &user.PasswordHash, &user.Status, &user.UserRole)
+	err := r.db.QueryRowContext(r.context, query, email).Scan(&user.UUID, &user.CreatedAt, &user.UpdatedAt, &user.Email, &user.NameSurname, &user.PasswordHash, &user.Status, &user.UserRole)
 	if err != nil {
 		return &user, custom_error.DatabaseError()
 	}
@@ -67,7 +67,7 @@ func (r *AuthRepo) GetUserSignByEmail(email string) (*model.User, error) {
 func (r *AuthRepo) GetUserById(id uuid.UUID) (*model.User, error) {
 	var user model.User
 	query := `SELECT * FROM users WHERE id = $1`
-	err := r.db.QueryRowContext(r.context, query, id).Scan(&user.ID, &user.CreatedAt, &user.UpdatedAt, &user.Email, &user.NameSurname, &user.PasswordHash, &user.Status, &user.UserRole)
+	err := r.db.QueryRowContext(r.context, query, id).Scan(&user.UUID, &user.CreatedAt, &user.UpdatedAt, &user.Email, &user.NameSurname, &user.PasswordHash, &user.Status, &user.UserRole)
 	if err != nil {
 		return nil, custom_error.DatabaseError()
 	}

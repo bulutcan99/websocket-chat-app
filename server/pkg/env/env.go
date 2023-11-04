@@ -30,6 +30,8 @@ type ENV struct {
 	RedisPort                     int    `env:"REDIS_PORT,required"`
 	RedisPassword                 string `env:"REDIS_PASSWORD,required"`
 	RedisDBNumber                 int    `env:"REDIS_DB_NUMBER,required"`
+	MsgChannelType                string `env:"MSG_CHANNEL_TYPE,required"`
+	MsgType                       string `env:"MSG_TYPE,required"`
 	KafkaHost                     string `env:"KAFKA_HOST,required"`
 	KafkaPort                     int    `env:"KAFKA_PORT,required"`
 	KafkaMessageTopic             string `env:"KAFKA_MESSAGE_TOPIC,required"`

@@ -18,7 +18,7 @@ var (
 )
 
 type TokenMetaData struct {
-	ID      string
+	UUID    string
 	Email   string
 	Role    string
 	Expires int64

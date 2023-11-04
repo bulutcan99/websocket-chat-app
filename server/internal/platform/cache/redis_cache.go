@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/bulutcan99/go-websocket/internal/model"
-	redis2 "github.com/bulutcan99/go-websocket/pkg/config/redis"
+	config_redis "github.com/bulutcan99/go-websocket/pkg/config/redis"
 	"github.com/bulutcan99/go-websocket/pkg/token"
 	"github.com/redis/go-redis/v9"
 	"strconv"
@@ -14,11 +14,14 @@ import (
 
 type UserCache struct {
 	UserID           string `json:"id"`
+	UserUUID         string `json:"uuid"`
+	UserNickname     string `json:"nickname"`
 	UserEmail        string `json:"email"`
 	UserRole         string `json:"role"`
 	UserCreatedAt    string `json:"created_at"`
 	UserUpdatedAt    string `json:"updated_at"`
-	UserNameSurname  string `json:"name_surname"`
+	UserName         string `json:"name"`
+	UserSurname      string `json:"surname"`
 	UserPasswordHash string `json:"password_hash"`
 	UserStatus       string `json:"status"`
 }
@@ -35,7 +38,7 @@ type RedisCache struct {
 	context context.Context
 }
 
-func NewRedisCache(redis *redis2.Redis) *RedisCache {
+func NewRedisCache(redis *config_redis.Redis) *RedisCache {
 	return &RedisCache{
 		client:  redis.Client,
 		context: redis.Context,
@@ -153,12 +156,12 @@ func (rc *RedisCache) SetUserData(id string, user *UserCache) error {
 
 func (rc *RedisCache) DbUserToCacheUser(user *model.User) *UserCache {
 	return &UserCache{
-		UserID:           user.ID.String(),
+		UserID:           user.UUID.String(),
 		UserEmail:        user.Email,
 		UserRole:         user.UserRole,
 		UserCreatedAt:    user.CreatedAt.Format(time.RFC3339),
 		UserUpdatedAt:    user.UpdatedAt.Format(time.RFC3339),
-		UserNameSurname:  user.NameSurname,
+		UserNameSurname:  user.Name,
 		UserPasswordHash: user.PasswordHash,
 		UserStatus:       strconv.Itoa(user.Status),
 	}
