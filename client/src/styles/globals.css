@@ -24,3 +24,7 @@
     opacity: 1;
   }
 }
+
+.angle-down-icon {
+  transition: transform 500ms;
+}

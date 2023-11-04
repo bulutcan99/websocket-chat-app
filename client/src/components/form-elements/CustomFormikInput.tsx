@@ -14,6 +14,7 @@ interface Props {
   onBlur?: (e: React.FormEvent<HTMLInputElement>) => void;
   id: string;
   name: string;
+  value: string;
 }
 
 const CustomFormikInput = ({
@@ -24,6 +25,7 @@ const CustomFormikInput = ({
   onChange,
   onFocus,
   onBlur,
+  value,
   rightIcon,
   type,
   id,
@@ -36,7 +38,7 @@ const CustomFormikInput = ({
       width={"100%"}
       paddingLeft={"10px"}
       paddingRight={"10px"}
-      backgroundColor={theme.colors.gray["100"]}
+      backgroundColor={"gray.100"}
       borderRadius={"2px"}
       padding={"10px"}
       {...containerSettings}
@@ -47,6 +49,7 @@ const CustomFormikInput = ({
         name={name}
         type={type}
         placeholder={placeholder}
+        value={value}
         onChange={onChange}
         onFocus={onFocus}
         onBlur={onBlur}
