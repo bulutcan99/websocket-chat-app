@@ -187,7 +187,7 @@ export default function Home() {
               alignItems={"flex-end"}
               height={"40%"}
             >
-              Still not a member? Let's
+              Still not a member? {"Let's"}
               <Text
                 textDecoration={"underline"}
                 marginLeft={1}

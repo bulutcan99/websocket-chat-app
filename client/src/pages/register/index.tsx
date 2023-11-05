@@ -9,7 +9,7 @@ import Link from "next/link";
 import Layout from "@/components/Layout";
 import UserIcon from "@/components/icons/UserIcon";
 import { fetchRegister } from "@/utils/api";
-import { Form, Formik, FormikHelpers } from "formik";
+import { Form, Formik } from "formik";
 import CustomFormikInput from "@/components/form-elements/CustomFormikInput";
 import CustomSelect from "@/components/form-elements/CustomSelect";
 import { RegisterRequestBody } from "@/utils/types/types";
@@ -374,7 +374,7 @@ const Register = () => {
             height={passwordValue?.length ? "7%" : "20%"}
             transition={"height 500ms"}
           >
-            Already a member! Let's
+            Already a member! {"Let's"}
             <Text
               textDecoration={"underline"}
               marginLeft={1}
