@@ -8,6 +8,6 @@ export type RegisterRequestBody = {
 };
 
 export type CustomSelectOptions = {
-  value: number | string;
+  value: string;
   label: string;
 };

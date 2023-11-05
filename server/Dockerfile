@@ -1,5 +1,5 @@
 # Start from the golang base image
-FROM golang:latest as builder
+FROM golang:latest 
 
 # Set the Current Working Directory inside the container
 WORKDIR /app
@@ -14,17 +14,9 @@ RUN go mod download
 COPY . .
 
 # Build the Go app
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o myapp .
+RUN go build -o myapp .
 
 # Start a new stage from scratch
-FROM alpine:latest
-
-# Set the Current Working Directory inside the container
-WORKDIR /root/
-
-# Copy the Pre-built binary file from the previous stage
-COPY --from=builder /app/myapp .
-
 # Expose port 8080 to the outside world
 EXPOSE 8080
 
