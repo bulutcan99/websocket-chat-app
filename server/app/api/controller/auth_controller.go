@@ -3,7 +3,7 @@ package controller
 import (
 	"github.com/bulutcan99/go-websocket/internal/model"
 	"github.com/bulutcan99/go-websocket/internal/platform/cache"
-	"github.com/bulutcan99/go-websocket/internal/platform/repository"
+	"github.com/bulutcan99/go-websocket/internal/repository"
 	"github.com/bulutcan99/go-websocket/pkg/helper"
 	"github.com/bulutcan99/go-websocket/pkg/token"
 	"github.com/bulutcan99/go-websocket/pkg/utility"

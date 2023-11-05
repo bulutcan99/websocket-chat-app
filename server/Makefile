@@ -6,7 +6,7 @@ MIGRATIONS_FOLDER = $(PWD)/internal/db/migration
 DATABASE_URL=postgres://myuser:pass@localhost:5432/postgres?sslmode=disable
 
 clean:
-	rm -rf ./build
+	rm -rf ./server/build
 
 critic:
 	gocritic check -enableAll ./...
@@ -72,6 +72,8 @@ docker.stop.postgres:
 
 docker.stop.redis:
 	docker stop cgapp-redis
+
+
 
 #swag:
 #	swag init

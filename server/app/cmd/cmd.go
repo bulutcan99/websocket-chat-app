@@ -6,7 +6,7 @@ import (
 	"github.com/bulutcan99/go-websocket/app/api/route"
 	"github.com/bulutcan99/go-websocket/internal/platform/cache"
 	"github.com/bulutcan99/go-websocket/internal/platform/pubsub"
-	"github.com/bulutcan99/go-websocket/internal/platform/repository"
+	repository2 "github.com/bulutcan99/go-websocket/internal/repository"
 	wsocket "github.com/bulutcan99/go-websocket/internal/ws"
 	config_builder "github.com/bulutcan99/go-websocket/pkg/config"
 	config_fiber "github.com/bulutcan99/go-websocket/pkg/config/fiber"
@@ -44,9 +44,9 @@ func Start() {
 	defer Redis.Close()
 	defer KafkaProducer.Close()
 	defer KafkaConsumer.Close()
-	authRepo := repository.NewAuthUserRepo(Psql)
-	userRepo := repository.NewUserRepo(Psql)
-	chatRepo := repository.NewChatRepo(Psql)
+	authRepo := repository2.NewAuthUserRepo(Psql)
+	userRepo := repository2.NewUserRepo(Psql)
+	chatRepo := repository2.NewChatRepo(Psql)
 	redisCache := db_cache.NewRedisCache(Redis)
 	kafkaProducer := pubsub.NewKafkaPublisher(*KafkaProducer)
 	kafkaConsumer := pubsub.NewKafkaSubscriber(*KafkaConsumer)

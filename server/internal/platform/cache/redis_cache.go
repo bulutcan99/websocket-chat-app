@@ -15,13 +15,13 @@ import (
 type UserCache struct {
 	UserID           string `json:"id"`
 	UserUUID         string `json:"uuid"`
+	UserName         string `json:"name"`
+	UserSurname      string `json:"surname"`
 	UserNickname     string `json:"nickname"`
 	UserEmail        string `json:"email"`
 	UserRole         string `json:"role"`
 	UserCreatedAt    string `json:"created_at"`
 	UserUpdatedAt    string `json:"updated_at"`
-	UserName         string `json:"name"`
-	UserSurname      string `json:"surname"`
 	UserPasswordHash string `json:"password_hash"`
 	UserStatus       string `json:"status"`
 }
@@ -156,14 +156,17 @@ func (rc *RedisCache) SetUserData(id string, user *UserCache) error {
 
 func (rc *RedisCache) DbUserToCacheUser(user *model.User) *UserCache {
 	return &UserCache{
-		UserID:           user.UUID.String(),
+		UserID:           strconv.Itoa(int(user.Id)),
+		UserUUID:         user.UUID.String(),
+		UserName:         user.UserName,
+		UserSurname:      user.UserSurName,
+		UserNickname:     user.Nickname,
+		UserPasswordHash: user.Passwordhash,
 		UserEmail:        user.Email,
 		UserRole:         user.UserRole,
+		UserStatus:       strconv.Itoa(user.Status),
 		UserCreatedAt:    user.CreatedAt.Format(time.RFC3339),
 		UserUpdatedAt:    user.UpdatedAt.Format(time.RFC3339),
-		UserNameSurname:  user.Name,
-		UserPasswordHash: user.PasswordHash,
-		UserStatus:       strconv.Itoa(user.Status),
 	}
 }
 

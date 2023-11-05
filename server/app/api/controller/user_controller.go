@@ -3,7 +3,7 @@ package controller
 import (
 	"github.com/bulutcan99/go-websocket/internal/model"
 	"github.com/bulutcan99/go-websocket/internal/platform/cache"
-	"github.com/bulutcan99/go-websocket/internal/platform/repository"
+	"github.com/bulutcan99/go-websocket/internal/repository"
 	custom_error "github.com/bulutcan99/go-websocket/pkg/error"
 	"github.com/bulutcan99/go-websocket/pkg/utility"
 	"github.com/gofiber/fiber/v2"

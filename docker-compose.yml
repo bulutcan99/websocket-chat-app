@@ -1,0 +1,101 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:latest
+    restart: always
+    command: redis-server --requirepass myredispassword
+    ports:
+      - "6379:6379"
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    restart: always
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    ports:
+      - "9092:9092"
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    restart: always
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  migration:
+    image: migrate/migrate:latest
+    volumes:
+      - ./server/internal/migration:/migrations
+    command: [ "-path", "/migrations", "-database", "postgres://myuser:pass@postgres:5432/mydb?sslmode=disable", "up" ]
+    restart: always
+    depends_on:
+      - postgres
+
+  backend:
+    build: ./server
+    restart: always
+    depends_on:
+      - postgres
+      - redis
+      - kafka
+      - migration
+    env_file:
+      - ./server/.env
+    environment:
+      STAGE_STATUS: development
+      SERVER_HOST: 0.0.0.0
+      SERVER_PORT: 8080
+      SERVER_READ_TIMEOUT: 10
+      JWT_SECRET_KEY: mysecretkey
+      JWT_SECRET_KEY_EXPIRE_TIME: 12
+      JWT_REFRESH_KEY: myrefreshkey
+      JWT_REFRESH_KEY_EXPIRE_HOURS_COUNT: 24
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: myuser
+      DB_PASSWORD: pass
+      DB_NAME: postgres
+      DB_SSL_MODE: disable
+      DB_MAX_CONNECTIONS: 100
+      DB_MAX_IDLE_CONNECTIONS: 10
+      DB_MAX_LIFETIME_CONNECTIONS: 30
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: myredispassword
+      REDIS_DB_NUMBER: 0
+      MSG_CHANNEL_TYPE: kafka
+      KAFKA_HOST: kafka
+      KAFKA_PORT: 9092
+      KAFKA_MESSAGE_TOPIC: messages
+      KAFKA_NOTIFICATION_TOPIC: notifications
+      LOG_LEVEL: DEBUG
+    ports:
+      - "8080:8080"
+
+  frontend:
+    build: ./client
+    restart: always
+    depends_on:
+      - backend
+    env_file:
+      - ./client/.env
+    environment:
+      BASE_URL: http://backend:8080
+    ports:
+      - "3000:3000"

@@ -3,7 +3,7 @@ package controller
 import (
 	"github.com/bulutcan99/go-websocket/internal/model"
 	"github.com/bulutcan99/go-websocket/internal/platform/pubsub"
-	"github.com/bulutcan99/go-websocket/internal/platform/repository"
+	"github.com/bulutcan99/go-websocket/internal/repository"
 	wsocket "github.com/bulutcan99/go-websocket/internal/ws"
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"

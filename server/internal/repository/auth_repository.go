@@ -33,18 +33,22 @@ func (r *AuthRepo) CreateUser(u model.User) error {
 	query := `
         INSERT INTO users (
             id,
+            uuid,
+	          user_name,
+	          user_surname,
+	          nickname,
+            password_hash,
+            email,
+            user_role,
+            user_status,
             created_at,
             updated_at,
-            email,
-            name_surname,
-            password_hash,
-            user_status,
-            user_role
+            blocked_at       
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
 	_, err := r.db.ExecContext(
 		r.context,
 		query,
-		u.UUID, u.CreatedAt, u.UpdatedAt, u.Email, u.NameSurname, u.PasswordHash, u.Status, u.UserRole,
+		u.Id, u.UUID, u.UserName, u.UserSurName, u.Nickname, u.Passwordhash, u.Email, u.UserRole, u.Status, u.CreatedAt, u.UpdatedAt, u.BlockedAt,
 	)
 	if err != nil {
 		return err
@@ -56,7 +60,7 @@ func (r *AuthRepo) CreateUser(u model.User) error {
 func (r *AuthRepo) GetUserSignByEmail(email string) (*model.User, error) {
 	var user model.User
 	query := `SELECT * FROM users WHERE email = $1`
-	err := r.db.QueryRowContext(r.context, query, email).Scan(&user.UUID, &user.CreatedAt, &user.UpdatedAt, &user.Email, &user.NameSurname, &user.PasswordHash, &user.Status, &user.UserRole)
+	err := r.db.QueryRowContext(r.context, query, email).Scan(&user.Id, &user.UUID, &user.UserName, &user.UserSurName, &user.Nickname, &user.Passwordhash, &user.Email, &user.UserRole, &user.Status, &user.CreatedAt, &user.UpdatedAt, &user.BlockedAt)
 	if err != nil {
 		return &user, custom_error.DatabaseError()
 	}
@@ -67,7 +71,7 @@ func (r *AuthRepo) GetUserSignByEmail(email string) (*model.User, error) {
 func (r *AuthRepo) GetUserById(id uuid.UUID) (*model.User, error) {
 	var user model.User
 	query := `SELECT * FROM users WHERE id = $1`
-	err := r.db.QueryRowContext(r.context, query, id).Scan(&user.UUID, &user.CreatedAt, &user.UpdatedAt, &user.Email, &user.NameSurname, &user.PasswordHash, &user.Status, &user.UserRole)
+	err := r.db.QueryRowContext(r.context, query, id).Scan(&user.Id, &user.UUID, &user.UserName, &user.UserSurName, &user.Nickname, &user.Passwordhash, &user.Email, &user.UserRole, &user.Status, &user.CreatedAt, &user.UpdatedAt, &user.BlockedAt)
 	if err != nil {
 		return nil, custom_error.DatabaseError()
 	}

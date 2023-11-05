@@ -20,6 +20,7 @@ func ExtractTokenMetaData(c *fiber.Ctx) (*TokenMetaData, error) {
 		})
 		return nil, err
 	}
+	c.IP()
 
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok || !token.Valid {
