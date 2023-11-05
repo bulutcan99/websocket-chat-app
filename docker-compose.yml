@@ -19,30 +19,28 @@ services:
       - "6379:6379"
 
   kafka:
-    image: confluentinc/cp-kafka:latest
-    restart: always
-    depends_on:
-      - zookeeper
-    environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    image: docker.io/bitnami/kafka:3.5
     ports:
       - "9092:9092"
-
-  zookeeper:
-    image: confluentinc/cp-zookeeper:latest
-    restart: always
+    volumes:
+      - "kafka_data:/bitnami"
     environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
+      # KRaft settings
+      - KAFKA_CFG_NODE_ID=0
+      - KAFKA_CFG_PROCESS_ROLES=controller,broker
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka:9093
+      # Listeners
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=PLAINTEXT
 
   migration:
     image: migrate/migrate:latest
     volumes:
       - ./server/internal/migration:/migrations
-    command: [ "-path", "/migrations", "-database", "postgres://myuser:pass@postgres:5432/mydb?sslmode=disable", "up" ]
+    command: [ "-path", "/migrations", "-database", "postgres://myuser:pass@postgres:5432/postgres?sslmode=disable", "up" ]
     restart: always
     depends_on:
       - postgres
@@ -55,6 +53,7 @@ services:
       - redis
       - kafka
       - migration
+
     env_file:
       - ./server/.env
     environment:
@@ -88,14 +87,17 @@ services:
     ports:
       - "8080:8080"
 
-  frontend:
-    build: ./client
-    restart: always
-    depends_on:
-      - backend
-    env_file:
-      - ./client/.env
-    environment:
-      BASE_URL: http://backend:8080
-    ports:
-      - "3000:3000"
+volumes:
+  kafka_data:
+    driver: local
+  # frontend:
+  #   build: ./client
+  #   restart: always
+  #   depends_on:
+  #     - backend
+  #   env_file:
+  #     - ./client/.env.local
+  #   environment:
+  #     BASE_URL: http://backend:8080
+  #   ports:
+  #     - "3000:3000"
