@@ -11,7 +11,12 @@ import (
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
+	"strconv"
 	"time"
+)
+
+var (
+	userRole = "user"
 )
 
 type AuthInterface interface {
@@ -57,7 +62,7 @@ func (ac *AuthController) UserRegister(c *fiber.Ctx) error {
 		})
 	}
 
-	err = helper.RoleValidator(signUp.UserRole)
+	err = helper.RoleValidator(userRole)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": true,
@@ -68,11 +73,15 @@ func (ac *AuthController) UserRegister(c *fiber.Ctx) error {
 	user := model.User{
 		UUID:         uuid.New(),
 		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
+		BlockedAt:    time.Time{},
 		UserName:     signUp.Name,
+		UserSurName:  signUp.Surname,
+		Nickname:     signUp.Nickname,
 		Email:        signUp.Email,
 		Passwordhash: utility.GeneratePassword(signUp.Password),
 		Status:       1,
-		UserRole:     signUp.UserRole,
+		UserRole:     userRole,
 	}
 
 	if errCreate := ac.repo.CreateUser(user); errCreate != nil {
@@ -117,8 +126,9 @@ func (ac *AuthController) UserLogin(c *fiber.Ctx) error {
 		}
 
 		role := getUser.UserRole
-		userId := getUser.UUID.String()
-		tokens, err := token.GenerateNewTokens(getUser.UUID.String(), role, getUser.Email)
+		userId := strconv.Itoa(int(getUser.Id))
+		userIp := c.IP()
+		tokens, err := token.GenerateNewTokens(userId, role, getUser.Email, userIp)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": true,
@@ -126,7 +136,8 @@ func (ac *AuthController) UserLogin(c *fiber.Ctx) error {
 			})
 		}
 
-		err = ac.redisCache.SetAllUserData(signIn.Email, userId, getUser, tokens)
+		err = ac.redisCache.SetAllUserData(signIn.Email, userId, userIp, getUser, tokens)
+		err = ac.redisCache.SetUserIp(userId, userIp)
 		return c.JSON(fiber.Map{
 			"error": false,
 			"msg":   "Logged In Successfully!",
@@ -139,7 +150,6 @@ func (ac *AuthController) UserLogin(c *fiber.Ctx) error {
 			},
 		})
 	} else {
-
 		zap.S().Info("User data already in redis cache!")
 		isComparedUserPass := utility.ComparePasswords(userDataWithCache.UserPasswordHash, signIn.Password)
 		if !isComparedUserPass {
@@ -150,8 +160,9 @@ func (ac *AuthController) UserLogin(c *fiber.Ctx) error {
 		}
 
 		tokens, err := ac.redisCache.GetUserTokenData(userDataWithCache.UserID)
+		ipCache, err := ac.redisCache.GetUserIp(userDataWithCache.UserID)
 		if err != nil && err == redis.Nil {
-			tokens, err = token.GenerateNewTokens(userDataWithCache.UserID, userDataWithCache.UserRole, userDataWithCache.UserEmail)
+			tokens, err = token.GenerateNewTokens(userDataWithCache.UserID, userDataWithCache.UserRole, userDataWithCache.UserEmail, ipCache)
 			if err != nil {
 				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 					"error": true,
@@ -174,7 +185,6 @@ func (ac *AuthController) UserLogin(c *fiber.Ctx) error {
 }
 
 func (ac *AuthController) UserLogOut(c *fiber.Ctx) error {
-	tokenMetaData := &token.TokenMetaData{}
 	err, tokenMetaData := ac.TokenProtection(c)
 	if err != nil {
 		return c.JSON(fiber.Map{
@@ -190,7 +200,7 @@ func (ac *AuthController) UserLogOut(c *fiber.Ctx) error {
 		})
 	}
 
-	err = ac.redisCache.DeleteAllUserData(tokenMetaData.Email, tokenMetaData.UUID)
+	err = ac.redisCache.DeleteAllUserData(tokenMetaData.Email, tokenMetaData.Id)
 	if err != nil {
 		return c.JSON(fiber.Map{
 			"error": true,
@@ -223,7 +233,7 @@ func (ac *AuthController) TokenProtection(c *fiber.Ctx) (error, *token.TokenMeta
 		}), nil
 	}
 
-	userTokenCache, err := ac.redisCache.GetUserTokenData(tokenMetaData.UUID)
+	userIpCache, err := ac.redisCache.GetUserIp(tokenMetaData.Id)
 	if err != nil {
 		return c.JSON(fiber.Map{
 			"error": true,
@@ -231,10 +241,10 @@ func (ac *AuthController) TokenProtection(c *fiber.Ctx) (error, *token.TokenMeta
 		}), nil
 	}
 
-	if userTokenCache.Access != token.ExtractToken(c) {
+	if userIpCache != tokenMetaData.IP {
 		return c.JSON(fiber.Map{
 			"error": true,
-			"msg":   "Access token is not valid!",
+			"msg":   "User ip is not same with token ip!",
 		}), nil
 	}
 

@@ -41,11 +41,13 @@ func ExtractTokenMetaData(c *fiber.Ctx) (*TokenMetaData, error) {
 	role := claims["role"].(string)
 	id := claims["id"].(string)
 	email := claims["email"].(string)
+	ip := claims["ip"].(string)
 	return &TokenMetaData{
-		UUID:    id,
+		Id:      id,
 		Expires: expires,
 		Role:    role,
 		Email:   email,
+		IP:      ip,
 	}, nil
 }
 

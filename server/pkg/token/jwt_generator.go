@@ -18,9 +18,10 @@ var (
 )
 
 type TokenMetaData struct {
-	UUID    string
+	Id      string
 	Email   string
 	Role    string
+	IP      string
 	Expires int64
 }
 
@@ -29,8 +30,8 @@ type Tokens struct {
 	Refresh string
 }
 
-func GenerateNewTokens(id string, role string, email string) (*Tokens, error) {
-	accessToken, err := GenerateNewAccessToken(id, role, email)
+func GenerateNewTokens(id, role, email, ip string) (*Tokens, error) {
+	accessToken, err := GenerateNewAccessToken(id, role, email, ip)
 	if err != nil {
 		return nil, err
 	}
@@ -46,13 +47,14 @@ func GenerateNewTokens(id string, role string, email string) (*Tokens, error) {
 	}, nil
 }
 
-func GenerateNewAccessToken(id string, role string, email string) (string, error) {
+func GenerateNewAccessToken(id, role, email, ip string) (string, error) {
 	timeCount := *JWT_SECRET_KEY_EXPIRE_TIME
 	expUnix := time.Now().Add(time.Hour * time.Duration(timeCount)).Unix()
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"id":    id,
 		"role":  role,
 		"email": email,
+		"ip":    ip,
 		"exp":   expUnix,
 	})
 

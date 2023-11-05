@@ -5,14 +5,14 @@ import (
 	"github.com/bulutcan99/go-websocket/internal/model"
 	config_psql "github.com/bulutcan99/go-websocket/pkg/config/psql"
 	custom_error "github.com/bulutcan99/go-websocket/pkg/error"
-	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
+	"time"
 )
 
 type UserInterface interface {
-	GetUserSelf(id uuid.UUID) (*model.User, error)
+	GetUserSelf(id int32) (*model.User, error)
 	GetShowAnotherUserByEmail(email string) (*model.UserShown, error)
-	UpdatePassword(id uuid.UUID, oldPassword string, newPassword string) error
+	UpdatePassword(id int32, oldPassword string, newPassword string) error
 }
 
 type UserRepo struct {
@@ -27,7 +27,7 @@ func NewUserRepo(psql *config_psql.PostgreSQL) *UserRepo {
 	}
 }
 
-func (r *UserRepo) GetUserSelf(id uuid.UUID) (*model.User, error) {
+func (r *UserRepo) GetUserSelf(id int32) (*model.User, error) {
 	var user model.User
 	query := `SELECT * FROM users WHERE id = $1`
 	err := r.db.QueryRowContext(r.context, query, id).Scan(&user.Id, &user.UUID, &user.UserName, &user.UserSurName, &user.Nickname, &user.Passwordhash, &user.Email, &user.UserRole, &user.Status, &user.CreatedAt, &user.UpdatedAt, &user.BlockedAt)
@@ -57,22 +57,24 @@ func (r *UserRepo) GetShowAnotherUserByEmail(email string) (*model.UserShown, er
 	}, nil
 }
 
-func (r *UserRepo) UpdatePassword(id uuid.UUID, newPasswordHash string) error {
+func (r *UserRepo) UpdatePassword(id int32, newPasswordHash string) error {
 	var user model.User
 	query := `SELECT * FROM users WHERE id = $1`
-	err := r.db.QueryRowContext(r.context, query, id).Scan(&user.Passwordhash)
+	err := r.db.QueryRowContext(r.context, query, id).Scan(&user.Passwordhash, &user.UpdatedAt)
 	if err != nil {
 		return custom_error.DatabaseError()
 	}
 
-	updateQuery := `UPDATE users SET password_hash = $1 WHERE id = $2`
+	updateQuery := `UPDATE users SET password_hash = $1, updated_at = $2 WHERE id = $3`
 	_, updateError := r.db.ExecContext(
 		r.context,
 		updateQuery,
-		newPasswordHash)
+		newPasswordHash,
+		time.Now(),
+		id)
 
 	if updateError != nil {
-		return err
+		return custom_error.DatabaseError()
 	}
 
 	return nil
