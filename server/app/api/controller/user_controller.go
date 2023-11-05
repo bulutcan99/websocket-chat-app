@@ -44,7 +44,7 @@ func (uc *UserController) GetUserSelfInfo(c *fiber.Ctx) error {
 	userDataWithCache, err := uc.redisCache.GetUserDataById(tokenMetaData.Id)
 	if err == redis.Nil {
 		id, err := strconv.Atoi(tokenMetaData.Id)
-		user, err := uc.repo.GetUserSelf(id)
+		user, err := uc.repo.GetUserSelf(int32(id))
 		if err != nil {
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 				"error": true,
