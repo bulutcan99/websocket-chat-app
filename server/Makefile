@@ -2,8 +2,9 @@
 
 APP_NAME = chatapp
 BUILD_DIR = $(PWD)/build
-MIGRATIONS_FOLDER = $(PWD)/internal/db/migration
-DATABASE_URL=postgres://myuser:pass@localhost:5432/postgres?sslmode=disable
+MIGRATIONS_FOLDER = $(PWD)/internal/migration
+DATABASE_URL=postgresql://myuser:pass@localhost:5432/postgres?sslmode=disable
+
 
 clean:
 	rm -rf ./server/build
@@ -36,7 +37,7 @@ migrate.down:
 migrate.force:
 	migrate -path $(MIGRATIONS_FOLDER) -database "$(DATABASE_URL)" force $(version)
 
-docker.run: docker.postgres docker.redis
+docker.run: docker.postgres docker.redis docker.kafka
 
 docker.fiber.build:
 	docker build -t fiber .
@@ -62,7 +63,16 @@ docker.redis:
 		-p 6379:6379 \
 		redis
 
-docker.stop: docker.stop.postgres docker.stop.redis
+docker.kafka:
+	docker run --rm -d \
+		--name cgapp-kafka \
+		-p 9092:9092 \
+		-e KAFKA_ZOOKEEPER_CONNECT=localhost:2181 \
+		-e KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092 \
+		-e KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1 \
+		bitnami/kafka:latest
+
+docker.stop: docker.stop.postgres docker.stop.redis docker.stop.kafka migrate.down
 
 docker.stop.fiber:
 	docker stop cgapp-fiber
@@ -73,7 +83,8 @@ docker.stop.postgres:
 docker.stop.redis:
 	docker stop cgapp-redis
 
-
+docker.stop.kafka:
+	docker stop cgapp-kafka
 
 #swag:
 #	swag init
