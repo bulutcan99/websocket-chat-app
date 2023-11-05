@@ -45,6 +45,16 @@ func NewRedisCache(redis *config_redis.Redis) *RedisCache {
 	}
 }
 
+func (rc *RedisCache) GetUserIp(id string) (string, error) {
+	cacheUserIdKey := fmt.Sprintf("user:id:%s:ip", id)
+	userIp, err := rc.client.Get(rc.context, cacheUserIdKey).Result()
+	if err != nil {
+		return "", err
+	}
+
+	return userIp, nil
+}
+
 func (rc *RedisCache) GetUserTokenData(id string) (*token.Tokens, error) {
 	cacheUserIdKey := fmt.Sprintf("user:id:%s:token", id)
 	userData, err := rc.client.Get(rc.context, cacheUserIdKey).Result()
@@ -94,19 +104,34 @@ func (rc *RedisCache) GetUserDataById(id string) (*UserCache, error) {
 	return &user, nil
 }
 
-func (rc *RedisCache) SetAllUserData(email string, id string, user *model.User, tokens *token.Tokens) error {
+func (rc *RedisCache) SetAllUserData(email, id, ip string, user *model.User, tokens *token.Tokens) error {
 	err := rc.setUserId(email, id)
 	if err != nil {
 		return err
 	}
 
-	cacheData := rc.DbUserToCacheUser(user)
+	cacheData := rc.SetDbUserToCacheUser(user)
 	err = rc.SetUserData(id, cacheData)
 	if err != nil {
 		return err
 	}
 
 	err = rc.SetUserToken(id, tokens)
+	if err != nil {
+		return err
+	}
+
+	err = rc.SetUserIp(id, ip)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (rc *RedisCache) SetUserIp(id string, ip string) error {
+	cacheUserIdKey := fmt.Sprintf("user:id:%s:ip", id)
+	err := rc.client.Set(rc.context, cacheUserIdKey, ip, 24*time.Hour).Err()
 	if err != nil {
 		return err
 	}
@@ -154,7 +179,7 @@ func (rc *RedisCache) SetUserData(id string, user *UserCache) error {
 	return nil
 }
 
-func (rc *RedisCache) DbUserToCacheUser(user *model.User) *UserCache {
+func (rc *RedisCache) SetDbUserToCacheUser(user *model.User) *UserCache {
 	return &UserCache{
 		UserID:           strconv.Itoa(int(user.Id)),
 		UserUUID:         user.UUID.String(),
@@ -182,6 +207,18 @@ func (rc *RedisCache) DeleteAllUserData(email string, id string) error {
 	}
 
 	err = rc.DeleteUserToken(id)
+	if err != nil {
+		return err
+	}
+
+	err = rc.deleteUserIp(id)
+
+	return nil
+}
+
+func (rc *RedisCache) deleteUserIp(id string) error {
+	cacheUserIdKey := fmt.Sprintf("user:id:%s:ip", id)
+	err := rc.client.Del(rc.context, cacheUserIdKey).Err()
 	if err != nil {
 		return err
 	}
@@ -232,6 +269,7 @@ func (rc *RedisCache) UpdateUserPasswordHash(id string, newPassHash string) erro
 	}
 
 	user.UserPasswordHash = newPassHash
+	user.UserUpdatedAt = time.Now().String()
 	updatedUserData, err := json.Marshal(user)
 	if err != nil {
 		return err
